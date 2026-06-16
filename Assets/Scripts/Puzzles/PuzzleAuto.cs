@@ -17,10 +17,11 @@ public class PuzzleAuto : MonoBehaviour
     private int emptyY;
     private bool isOpen;
     private bool isWin;
+    private int openedFrame = -1;
 
     void Update()
     {
-        if (isOpen && Input.GetKeyDown(KeyCode.E))
+        if (isOpen && Time.frameCount > openedFrame && Input.GetKeyDown(KeyCode.E))
         {
             ClosePuzzle();
         }
@@ -101,6 +102,7 @@ public class PuzzleAuto : MonoBehaviour
 
         Shuffle();
         isOpen = true;
+        openedFrame = Time.frameCount;
         BlockPlayer(true);
     }
 

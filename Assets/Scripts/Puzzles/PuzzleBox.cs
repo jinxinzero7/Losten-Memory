@@ -1,5 +1,5 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class PuzzleBox : MonoBehaviour
 {
@@ -9,7 +9,6 @@ public class PuzzleBox : MonoBehaviour
     public bool playerNear;
 
     private Transform player;
-    private TMP_Text hintLabel;
 
     void Start()
     {
@@ -18,29 +17,16 @@ public class PuzzleBox : MonoBehaviour
             puzzleController = FindAnyObjectByType<PuzzleAuto>();
         }
 
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
-        {
-            player = playerObject.transform;
-        }
-
-        if (hintText != null)
-        {
-            hintLabel = hintText.GetComponent<TMP_Text>();
-            if (hintLabel != null)
-            {
-                hintLabel.text = "Нажми E, чтобы открыть головоломку";
-                hintLabel.fontSize = 24f;
-            }
-        }
-
+        CachePlayer();
+        ConfigureHint();
         SetHintVisible(false);
     }
 
     void Update()
     {
         bool canInteract = playerNear || IsPlayerInRange();
-        SetHintVisible(canInteract && puzzleController != null && !puzzleController.IsOpen());
+        bool shouldShowHint = canInteract && puzzleController != null && !puzzleController.IsOpen();
+        SetHintVisible(shouldShowHint);
 
         if (canInteract && puzzleController != null && Input.GetKeyDown(KeyCode.E) && !puzzleController.IsOpen())
         {
@@ -54,6 +40,7 @@ public class PuzzleBox : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = true;
+        player = other.transform;
         SetHintVisible(true);
     }
 
@@ -63,6 +50,26 @@ public class PuzzleBox : MonoBehaviour
 
         playerNear = false;
         SetHintVisible(false);
+    }
+
+    void ConfigureHint()
+    {
+        if (hintText == null) return;
+
+        TMP_Text label = hintText.GetComponent<TMP_Text>();
+        if (label != null)
+        {
+            label.text = "Press E";
+            label.fontSize = 24f;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.alignment = TextAlignmentOptions.Center;
+        }
+
+        RectTransform rect = hintText.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            rect.sizeDelta = new Vector2(260f, 60f);
+        }
     }
 
     void SetHintVisible(bool visible)
@@ -75,15 +82,18 @@ public class PuzzleBox : MonoBehaviour
 
     bool IsPlayerInRange()
     {
-        if (player == null)
-        {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-            if (playerObject == null) return false;
-
-            player = playerObject.transform;
-        }
+        if (player == null && !CachePlayer()) return false;
 
         return Vector2.Distance(transform.position, player.position) <= interactionRadius;
+    }
+
+    bool CachePlayer()
+    {
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject == null) return false;
+
+        player = playerObject.transform;
+        return true;
     }
 
     void OnDrawGizmosSelected()
