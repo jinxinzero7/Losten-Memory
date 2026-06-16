@@ -68,7 +68,7 @@ public class ChoiceDialogue : MonoBehaviour
 
         currentNodeIndex = 0;
         isDialogueActive = true;
-        playerController = FindFirstObjectByType<PlayerController>();
+        playerController = FindAnyObjectByType<PlayerController>();
         if (playerController != null)
         {
             playerController.SetMovementBlocked(true);

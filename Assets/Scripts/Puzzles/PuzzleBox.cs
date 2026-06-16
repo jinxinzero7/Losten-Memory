@@ -10,7 +10,7 @@ public class PuzzleBox : MonoBehaviour
     {
         if (puzzleController == null)
         {
-            puzzleController = FindFirstObjectByType<PuzzleAuto>();
+            puzzleController = FindAnyObjectByType<PuzzleAuto>();
         }
 
         SetHintVisible(false);

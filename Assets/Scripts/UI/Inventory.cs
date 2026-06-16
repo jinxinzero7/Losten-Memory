@@ -73,7 +73,7 @@ public class Inventory : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(panelName)) return null;
 
-        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        Canvas[] canvases = FindObjectsByType<Canvas>();
         foreach (Canvas canvas in canvases)
         {
             foreach (Transform child in canvas.GetComponentsInChildren<Transform>(true))
