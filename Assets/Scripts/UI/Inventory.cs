@@ -1,0 +1,202 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+public class Inventory : MonoBehaviour
+{
+    public static Inventory Instance;
+
+    private List<string> items = new List<string>();
+    private List<string> memories = new List<string>();
+    private int coins = 0;
+
+    [Header("UI Компоненты (назначаются один раз)")]
+    public string inventoryPanelName = "InventoryPanel";
+    public string memoriesPanelName = "MemoriesPanel";
+    public GameObject itemSlotPrefab;
+
+    [Header("Иконки")]
+    public Sprite keyIcon;
+    public Sprite coinIcon;
+    public Sprite memoryIcon;
+
+    private Transform inventoryPanel;
+    private Transform memoriesPanel;
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            Debug.Log("Inventory создан");
+
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log("Сцена загружена: " + scene.name);
+        FindUIPanels();
+        UpdateInventoryUI();
+    }
+
+    void Start()
+    {
+        FindUIPanels();
+        UpdateInventoryUI();
+    }
+
+    void FindUIPanels()
+    {
+        // Современный способ поиска Canvas
+        Canvas canvas = FindFirstObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogWarning("Canvas не найден!");
+            return;
+        }
+
+        Transform foundPanel = canvas.transform.Find(inventoryPanelName);
+        if (foundPanel != null)
+        {
+            inventoryPanel = foundPanel;
+        }
+        else
+        {
+            Debug.LogWarning("Панель не найдена: " + inventoryPanelName);
+        }
+
+        foundPanel = canvas.transform.Find(memoriesPanelName);
+        if (foundPanel != null)
+        {
+            memoriesPanel = foundPanel;
+        }
+    }
+
+    // ========== ПРЕДМЕТЫ ==========
+    public static void AddItem(string itemName)
+    {
+        if (Instance == null)
+        {
+            Debug.LogError("Inventory.Instance = NULL!");
+            return;
+        }
+
+        if (!Instance.items.Contains(itemName))
+        {
+            Instance.items.Add(itemName);
+            Instance.UpdateInventoryUI();
+            Debug.Log("Добавлен предмет: " + itemName);
+        }
+    }
+
+    public static bool HasItem(string itemName)
+    {
+        if (Instance == null) return false;
+        return Instance.items.Contains(itemName);
+    }
+
+    public static void RemoveItem(string itemName)
+    {
+        if (Instance == null) return;
+        Instance.items.Remove(itemName);
+        Instance.UpdateInventoryUI();
+    }
+
+    // ========== МОНЕТКИ ==========
+    public static void AddCoins(int amount)
+    {
+        if (Instance == null) return;
+        Instance.coins += amount;
+        Instance.UpdateInventoryUI();
+        Debug.Log("Монеток: " + Instance.coins);
+    }
+
+    public static int GetCoins()
+    {
+        return Instance?.coins ?? 0;
+    }
+
+    // ========== ВОСПОМИНАНИЯ ==========
+    public static void AddMemory(string memoryName)
+    {
+        if (Instance == null) return;
+
+        if (!Instance.memories.Contains(memoryName))
+        {
+            Instance.memories.Add(memoryName);
+            Instance.UpdateInventoryUI();
+            Debug.Log("Воспоминание добавлено: " + memoryName);
+        }
+    }
+
+    public static bool HasMemory(string memoryName)
+    {
+        if (Instance == null) return false;
+        return Instance.memories.Contains(memoryName);
+    }
+
+    // ========== UI ==========
+    void UpdateInventoryUI()
+    {
+        // Обновляем панель предметов
+        if (inventoryPanel != null)
+        {
+            foreach (Transform child in inventoryPanel)
+                Destroy(child.gameObject);
+
+            foreach (string item in items)
+            {
+                if (itemSlotPrefab == null) continue;
+
+                GameObject slot = Instantiate(itemSlotPrefab, inventoryPanel);
+                Image icon = slot.GetComponent<Image>();
+
+                if (item == "Key" && keyIcon != null)
+                    icon.sprite = keyIcon;
+            }
+
+            // Монетки
+            if (coins > 0 && itemSlotPrefab != null)
+            {
+                GameObject coinSlot = Instantiate(itemSlotPrefab, inventoryPanel);
+                Image icon = coinSlot.GetComponent<Image>();
+                if (coinIcon != null) icon.sprite = coinIcon;
+
+                TMPro.TMP_Text text = coinSlot.GetComponentInChildren<TMPro.TMP_Text>();
+                if (text != null) text.text = coins.ToString();
+            }
+        }
+
+        // Обновляем панель воспоминаний
+        if (memoriesPanel != null)
+        {
+            foreach (Transform child in memoriesPanel)
+                Destroy(child.gameObject);
+
+            foreach (string memory in memories)
+            {
+                if (itemSlotPrefab == null) continue;
+
+                GameObject slot = Instantiate(itemSlotPrefab, memoriesPanel);
+                Image icon = slot.GetComponent<Image>();
+                if (memoryIcon != null) icon.sprite = memoryIcon;
+
+                TMPro.TMP_Text text = slot.GetComponentInChildren<TMPro.TMP_Text>();
+                if (text != null) text.text = memory;
+            }
+        }
+    }
+}

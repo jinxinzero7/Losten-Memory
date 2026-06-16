@@ -1,0 +1,51 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# IDE and OS files
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.tmp
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.DS_Store
+Thumbs.db
+
+# Unity crash reports and local caches
+sysinfo.txt
+*.stackdump
+MemoryCaptures/
+Recordings/
+
+# Builds and exported archives stay local
+*.apk
+*.aab
+*.app
+*.exe
+*.zip
+
+# Local NuGet packages restored by tooling
+Packages/SQLite.3.13.0/
+
+# Imported TextMesh Pro samples are not needed for the game
+Assets/TextMesh Pro/Examples & Extras/
+Assets/TextMesh Pro/Examples & Extras.meta
+
+# Corrupted duplicate exported build folder
+αÑºÑαó¡δÑ ¬«»¿¿/
