@@ -60,29 +60,32 @@ public class Inventory : MonoBehaviour
 
     void FindUIPanels()
     {
-        // Современный способ поиска Canvas
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            Debug.LogWarning("Canvas не найден!");
-            return;
-        }
+        inventoryPanel = FindPanel(inventoryPanelName);
+        memoriesPanel = FindPanel(memoriesPanelName);
 
-        Transform foundPanel = canvas.transform.Find(inventoryPanelName);
-        if (foundPanel != null)
-        {
-            inventoryPanel = foundPanel;
-        }
-        else
+        if (inventoryPanel == null && !string.IsNullOrWhiteSpace(inventoryPanelName))
         {
             Debug.LogWarning("Панель не найдена: " + inventoryPanelName);
         }
+    }
 
-        foundPanel = canvas.transform.Find(memoriesPanelName);
-        if (foundPanel != null)
+    Transform FindPanel(string panelName)
+    {
+        if (string.IsNullOrWhiteSpace(panelName)) return null;
+
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        foreach (Canvas canvas in canvases)
         {
-            memoriesPanel = foundPanel;
+            foreach (Transform child in canvas.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == panelName)
+                {
+                    return child;
+                }
+            }
         }
+
+        return null;
     }
 
     // ========== ПРЕДМЕТЫ ==========
