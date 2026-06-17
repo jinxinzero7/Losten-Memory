@@ -15,6 +15,7 @@ public class Inventory : MonoBehaviour
     public string inventoryPanelName = "InventoryPanel";
     public string memoriesPanelName = "MemoriesPanel";
     public GameObject itemSlotPrefab;
+    public bool warnWhenPanelsMissing = false;
 
     [Header("Иконки")]
     public Sprite keyIcon;
@@ -30,7 +31,6 @@ public class Inventory : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log("Inventory создан");
 
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -47,7 +47,6 @@ public class Inventory : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log("Сцена загружена: " + scene.name);
         FindUIPanels();
         UpdateInventoryUI();
     }
@@ -63,9 +62,14 @@ public class Inventory : MonoBehaviour
         inventoryPanel = FindPanel(inventoryPanelName);
         memoriesPanel = FindPanel(memoriesPanelName);
 
-        if (inventoryPanel == null && !string.IsNullOrWhiteSpace(inventoryPanelName))
+        if (warnWhenPanelsMissing && inventoryPanel == null && !string.IsNullOrWhiteSpace(inventoryPanelName))
         {
             Debug.LogWarning("Панель не найдена: " + inventoryPanelName);
+        }
+
+        if (warnWhenPanelsMissing && memoriesPanel == null && !string.IsNullOrWhiteSpace(memoriesPanelName))
+        {
+            Debug.LogWarning("Панель не найдена: " + memoriesPanelName);
         }
     }
 
@@ -101,7 +105,6 @@ public class Inventory : MonoBehaviour
         {
             Instance.items.Add(itemName);
             Instance.UpdateInventoryUI();
-            Debug.Log("Добавлен предмет: " + itemName);
         }
     }
 
@@ -124,7 +127,6 @@ public class Inventory : MonoBehaviour
         if (Instance == null) return;
         Instance.coins += amount;
         Instance.UpdateInventoryUI();
-        Debug.Log("Монеток: " + Instance.coins);
     }
 
     public static int GetCoins()
@@ -141,7 +143,6 @@ public class Inventory : MonoBehaviour
         {
             Instance.memories.Add(memoryName);
             Instance.UpdateInventoryUI();
-            Debug.Log("Воспоминание добавлено: " + memoryName);
         }
     }
 

@@ -19,7 +19,6 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             isFirstLaunch = PlayerPrefs.GetInt("FirstLaunch", 1) == 1;
-            Debug.Log("GameManager создан. Первый запуск: " + isFirstLaunch);
 
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -36,7 +35,6 @@ public class GameManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log("Сцена загружена: " + scene.name);
         hasSpawned = false;
 
         // Телепортируем ДО того, как игрок появится на экране
@@ -58,7 +56,6 @@ public class GameManager : MonoBehaviour
             Vector3 spawnPosition = GetSpawnPosition();
             player.transform.position = spawnPosition;
             hasSpawned = true;
-            Debug.Log("Персонаж телепортирован в: " + spawnPosition);
         }
     }
 
@@ -76,7 +73,6 @@ public class GameManager : MonoBehaviour
                 PlayerPrefs.SetInt("FirstLaunch", 0);
                 PlayerPrefs.Save();
 
-                Debug.Log("Первый запуск! StartPoint: " + startPoint.transform.position);
                 return startPoint.transform.position;
             }
             else
@@ -88,7 +84,6 @@ public class GameManager : MonoBehaviour
         GameObject spawnPoint = GameObject.Find("SpawnPoint");
         if (spawnPoint != null)
         {
-            Debug.Log("Используем SpawnPoint: " + spawnPoint.transform.position);
             return spawnPoint.transform.position;
         }
 

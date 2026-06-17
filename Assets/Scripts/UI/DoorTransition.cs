@@ -12,18 +12,14 @@ public class DoorTransition : MonoBehaviour
     {
         if (playerNear && Input.GetKeyDown(KeyCode.E))
         {
-            Debug.Log("Нажата E у двери. requireKey=" + requireKey);
-            Debug.Log("Inventory.HasItem(Key)=" + Inventory.HasItem("Key"));
-
             if (!requireKey || Inventory.HasItem("Key"))
             {
-                Debug.Log("Дверь открыта! Переход...");
-                GameManager.Instance.SetSpawnPoint(transform.position);
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.SetSpawnPoint(transform.position);
+                }
+
                 SceneManager.LoadScene(targetScene);
-            }
-            else
-            {
-                Debug.Log("Нужен ключ!");
             }
         }
     }

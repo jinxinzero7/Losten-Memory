@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class PuzzleAuto : MonoBehaviour
@@ -9,8 +10,11 @@ public class PuzzleAuto : MonoBehaviour
     public int gridSize = 3;
     public float tileSize = 100f;
     public float spacing = 10f;
+    public string memoryReward = "Фрагмент памяти";
+    [TextArea] public string completionText = "Фрагмент памяти найден. Демо-версия завершена.";
 
     private GameObject canvasObj;
+    private GameObject completionCanvasObj;
     private readonly List<GameObject> tiles = new List<GameObject>();
     private int[,] board;
     private int emptyX;
@@ -30,6 +34,8 @@ public class PuzzleAuto : MonoBehaviour
     public void OpenPuzzle()
     {
         if (isOpen || isWin) return;
+
+        CloseCompletionPanel();
 
         canvasObj = new GameObject("PuzzleCanvas");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
@@ -184,8 +190,13 @@ public class PuzzleAuto : MonoBehaviour
         }
 
         isWin = true;
-        Debug.Log("Puzzle solved");
+        if (!string.IsNullOrWhiteSpace(memoryReward))
+        {
+            Inventory.AddMemory(memoryReward);
+        }
+
         ClosePuzzle();
+        ShowCompletionPanel();
     }
 
     public void ClosePuzzle()
@@ -207,5 +218,118 @@ public class PuzzleAuto : MonoBehaviour
         {
             player.SetMovementBlocked(block);
         }
+    }
+
+    void ShowCompletionPanel()
+    {
+        completionCanvasObj = new GameObject("PuzzleCompletionCanvas");
+        Canvas canvas = completionCanvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 120;
+        completionCanvasObj.AddComponent<CanvasScaler>();
+        completionCanvasObj.AddComponent<GraphicRaycaster>();
+
+        GameObject bg = new GameObject("BG");
+        bg.transform.SetParent(completionCanvasObj.transform, false);
+        Image bgImage = bg.AddComponent<Image>();
+        bgImage.color = new Color(0, 0, 0, 0.75f);
+        RectTransform bgRect = bg.GetComponent<RectTransform>();
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.sizeDelta = Vector2.zero;
+
+        GameObject panel = new GameObject("Panel");
+        panel.transform.SetParent(completionCanvasObj.transform, false);
+        Image panelImage = panel.AddComponent<Image>();
+        panelImage.color = new Color(0.08f, 0.08f, 0.1f, 0.95f);
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = Vector2.zero;
+        panelRect.sizeDelta = new Vector2(640f, 320f);
+
+        VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(40, 40, 34, 34);
+        layout.spacing = 18f;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlHeight = false;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.childForceExpandWidth = true;
+
+        CreateLabel(panel.transform, "Фрагмент памяти найден", 34f, FontStyles.Bold, 56f);
+        CreateLabel(panel.transform, completionText, 22f, FontStyles.Normal, 120f);
+
+        GameObject buttons = new GameObject("Buttons");
+        buttons.transform.SetParent(panel.transform, false);
+        HorizontalLayoutGroup buttonLayout = buttons.AddComponent<HorizontalLayoutGroup>();
+        buttonLayout.spacing = 16f;
+        buttonLayout.childAlignment = TextAnchor.MiddleCenter;
+        buttonLayout.childControlHeight = false;
+        buttonLayout.childControlWidth = false;
+        buttonLayout.childForceExpandHeight = false;
+        buttonLayout.childForceExpandWidth = false;
+        LayoutElement buttonsLayout = buttons.AddComponent<LayoutElement>();
+        buttonsLayout.preferredHeight = 58f;
+
+        CreateButton(buttons.transform, "Продолжить", CloseCompletionPanel);
+        CreateButton(buttons.transform, "В меню", () =>
+        {
+            CloseCompletionPanel();
+            SceneManager.LoadScene("MainMenu");
+        });
+    }
+
+    void CloseCompletionPanel()
+    {
+        if (completionCanvasObj != null)
+        {
+            Destroy(completionCanvasObj);
+            completionCanvasObj = null;
+        }
+    }
+
+    void CreateLabel(Transform parent, string text, float fontSize, FontStyles fontStyle, float height)
+    {
+        GameObject label = new GameObject("Label");
+        label.transform.SetParent(parent, false);
+        TextMeshProUGUI tmp = label.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.fontStyle = fontStyle;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
+        LayoutElement layout = label.AddComponent<LayoutElement>();
+        layout.preferredHeight = height;
+    }
+
+    void CreateButton(Transform parent, string text, UnityEngine.Events.UnityAction onClick)
+    {
+        GameObject buttonObject = new GameObject(text);
+        buttonObject.transform.SetParent(parent, false);
+        Image image = buttonObject.AddComponent<Image>();
+        image.color = new Color(0.22f, 0.22f, 0.26f, 1f);
+        Button button = buttonObject.AddComponent<Button>();
+        button.onClick.AddListener(onClick);
+
+        RectTransform rect = buttonObject.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(180f, 52f);
+
+        GameObject label = new GameObject("Text");
+        label.transform.SetParent(buttonObject.transform, false);
+        TextMeshProUGUI tmp = label.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = 22f;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.textWrappingMode = TextWrappingModes.NoWrap;
+
+        RectTransform labelRect = label.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
     }
 }

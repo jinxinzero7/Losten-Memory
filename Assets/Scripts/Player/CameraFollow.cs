@@ -58,7 +58,6 @@ public class CameraFollow : MonoBehaviour
         if (player != null)
         {
             target = player.transform;
-            Debug.Log("Камера нашла игрока!");
         }
     }
 

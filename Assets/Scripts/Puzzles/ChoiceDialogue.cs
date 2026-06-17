@@ -41,6 +41,7 @@ public class ChoiceDialogue : MonoBehaviour
 
     void Start()
     {
+        ConfigureInteractionText();
         SetDialogueVisible(false);
         SetInteractionVisible(false);
     }
@@ -192,6 +193,31 @@ public class ChoiceDialogue : MonoBehaviour
         if (interactionText != null)
         {
             interactionText.SetActive(visible);
+        }
+    }
+
+    void ConfigureInteractionText()
+    {
+        if (interactionText == null) return;
+
+        TMP_Text label = interactionText.GetComponent<TMP_Text>();
+        if (label == null)
+        {
+            label = interactionText.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (label != null)
+        {
+            label.text = "E - говорить";
+            label.fontSize = 24f;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.alignment = TextAlignmentOptions.Center;
+        }
+
+        RectTransform rect = interactionText.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            rect.sizeDelta = new Vector2(280f, 60f);
         }
     }
 
