@@ -36,4 +36,9 @@ public class KeyInventory : MonoBehaviour
     {
         return collectedKeys.Count > 0;
     }
+
+    public static void ResetAll()
+    {
+        collectedKeys.Clear();
+    }
 }

@@ -18,7 +18,8 @@ public class GameManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            isFirstLaunch = PlayerPrefs.GetInt("FirstLaunch", 1) == 1;
+            ResetRuntimeProgress();
+            isFirstLaunch = true;
 
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -70,8 +71,6 @@ public class GameManager : MonoBehaviour
             if (startPoint != null)
             {
                 isFirstLaunch = false;
-                PlayerPrefs.SetInt("FirstLaunch", 0);
-                PlayerPrefs.Save();
 
                 return startPoint.transform.position;
             }
@@ -97,14 +96,19 @@ public class GameManager : MonoBehaviour
 
     public static void ResetFirstLaunch()
     {
-        PlayerPrefs.SetInt("FirstLaunch", 1);
-        PlayerPrefs.Save();
-        DemoQuest.ResetAll();
+        ResetRuntimeProgress();
 
         if (Instance != null)
         {
             Instance.isFirstLaunch = true;
             Instance.hasSpawned = false;
         }
+    }
+
+    private static void ResetRuntimeProgress()
+    {
+        DemoQuest.ResetAll();
+        KeyInventory.ResetAll();
+        Inventory.ResetAll();
     }
 }

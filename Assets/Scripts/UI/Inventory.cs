@@ -162,6 +162,16 @@ public class Inventory : MonoBehaviour
         return Instance.memories.Contains(memoryName);
     }
 
+    public static void ResetAll()
+    {
+        if (Instance == null) return;
+
+        Instance.items.Clear();
+        Instance.memories.Clear();
+        Instance.coins = 0;
+        Instance.UpdateInventoryUI();
+    }
+
     // ========== UI ==========
     void UpdateInventoryUI()
     {

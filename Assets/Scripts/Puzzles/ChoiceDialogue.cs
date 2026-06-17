@@ -33,7 +33,7 @@ public class ChoiceDialogue : MonoBehaviour
     public GameObject choicesPanel;
     public GameObject choiceButtonPrefab;
     public GameObject interactionText;
-    public bool useDemoQuestDialogue = true;
+    public bool useDemoQuestDialogue = false;
 
     private int currentNodeIndex;
     private bool playerNear;
@@ -77,6 +77,7 @@ public class ChoiceDialogue : MonoBehaviour
 
         currentNodeIndex = 0;
         isDialogueActive = true;
+        DemoQuest.StartQuest();
         playerController = FindAnyObjectByType<PlayerController>();
         if (playerController != null)
         {
