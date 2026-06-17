@@ -5,6 +5,8 @@ public class DoorTransition : MonoBehaviour
 {
     public string targetScene;
     public bool requireKey = true;
+    public bool requireQuestStarted;
+    public bool requireFinalPathOpen;
     public GameObject interactionText;
     private bool playerNear = false;
 
@@ -12,7 +14,7 @@ public class DoorTransition : MonoBehaviour
     {
         if (playerNear && Input.GetKeyDown(KeyCode.E))
         {
-            if (!requireKey || Inventory.HasItem("Key"))
+            if (CanOpen())
             {
                 if (GameManager.Instance != null)
                 {
@@ -22,6 +24,15 @@ public class DoorTransition : MonoBehaviour
                 SceneManager.LoadScene(targetScene);
             }
         }
+    }
+
+    bool CanOpen()
+    {
+        if (requireKey && !Inventory.HasItem("Key")) return false;
+        if (requireQuestStarted && !DemoQuest.IsQuestStarted) return false;
+        if (requireFinalPathOpen && !DemoQuest.IsFinalPathOpen) return false;
+
+        return true;
     }
 
     void OnTriggerEnter2D(Collider2D other)

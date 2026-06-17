@@ -3,12 +3,19 @@ using UnityEngine;
 public class CoinPickup : MonoBehaviour
 {
     public int coinValue = 1;
+    public string coinID;
     public GameObject interactionText;
 
     private bool playerNear;
 
     void Start()
     {
+        if (DemoQuest.IsCoinCollected(coinID))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (interactionText != null)
         {
             interactionText.SetActive(false);
@@ -20,6 +27,7 @@ public class CoinPickup : MonoBehaviour
         if (playerNear && Input.GetKeyDown(KeyCode.E))
         {
             Inventory.AddCoins(coinValue);
+            DemoQuest.MarkCoinCollected(coinID);
             Destroy(gameObject);
         }
     }

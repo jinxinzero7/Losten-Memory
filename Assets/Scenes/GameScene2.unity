@@ -290,6 +290,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
   targetScene: GameScene3
   requireKey: 0
+  requireQuestStarted: 1
+  requireFinalPathOpen: 0
   interactionText: {fileID: 0}
 --- !u!61 &110579699
 BoxCollider2D:

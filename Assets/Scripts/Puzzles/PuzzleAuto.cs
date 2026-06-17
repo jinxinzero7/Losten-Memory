@@ -23,6 +23,15 @@ public class PuzzleAuto : MonoBehaviour
     private bool isWin;
     private int openedFrame = -1;
 
+    void Start()
+    {
+        if (DemoQuest.IsPuzzleSolved)
+        {
+            isWin = true;
+            CoinRoomController.EnsureRoomUnlocked();
+        }
+    }
+
     void Update()
     {
         if (isOpen && Time.frameCount > openedFrame && Input.GetKeyDown(KeyCode.E))
@@ -190,6 +199,9 @@ public class PuzzleAuto : MonoBehaviour
         }
 
         isWin = true;
+        DemoQuest.MarkPuzzleSolved();
+        CoinRoomController.EnsureRoomUnlocked();
+
         if (!string.IsNullOrWhiteSpace(memoryReward))
         {
             Inventory.AddMemory(memoryReward);
@@ -258,8 +270,8 @@ public class PuzzleAuto : MonoBehaviour
         layout.childForceExpandHeight = false;
         layout.childForceExpandWidth = true;
 
-        CreateLabel(panel.transform, "Фрагмент памяти найден", 34f, FontStyles.Bold, 56f);
-        CreateLabel(panel.transform, completionText, 22f, FontStyles.Normal, 120f);
+        CreateLabel(panel.transform, "Проход открыт", 34f, FontStyles.Bold, 56f);
+        CreateLabel(panel.transform, "Фрагмент памяти найден. Справа открылся тайник с тремя монетами. Собери их и вернись к незнакомцу.", 22f, FontStyles.Normal, 120f);
 
         GameObject buttons = new GameObject("Buttons");
         buttons.transform.SetParent(panel.transform, false);

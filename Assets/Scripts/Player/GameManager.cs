@@ -99,6 +99,7 @@ public class GameManager : MonoBehaviour
     {
         PlayerPrefs.SetInt("FirstLaunch", 1);
         PlayerPrefs.Save();
+        DemoQuest.ResetAll();
 
         if (Instance != null)
         {

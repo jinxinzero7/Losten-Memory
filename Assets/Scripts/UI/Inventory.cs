@@ -134,6 +134,16 @@ public class Inventory : MonoBehaviour
         return Instance?.coins ?? 0;
     }
 
+    public static bool SpendCoins(int amount)
+    {
+        if (Instance == null || amount <= 0) return false;
+        if (Instance.coins < amount) return false;
+
+        Instance.coins -= amount;
+        Instance.UpdateInventoryUI();
+        return true;
+    }
+
     // ========== ВОСПОМИНАНИЯ ==========
     public static void AddMemory(string memoryName)
     {

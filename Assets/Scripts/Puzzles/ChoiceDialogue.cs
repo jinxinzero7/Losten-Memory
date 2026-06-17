@@ -33,6 +33,7 @@ public class ChoiceDialogue : MonoBehaviour
     public GameObject choicesPanel;
     public GameObject choiceButtonPrefab;
     public GameObject interactionText;
+    public bool useDemoQuestDialogue = true;
 
     private int currentNodeIndex;
     private bool playerNear;
@@ -61,6 +62,12 @@ public class ChoiceDialogue : MonoBehaviour
 
     void StartDialogue()
     {
+        if (useDemoQuestDialogue)
+        {
+            StartQuestDialogue();
+            return;
+        }
+
         if (dialogueNodes.Count == 0)
         {
             Debug.LogWarning("ChoiceDialogue has no dialogue nodes.");
@@ -78,6 +85,104 @@ public class ChoiceDialogue : MonoBehaviour
         SetInteractionVisible(false);
         SetDialogueVisible(true);
         ShowNode(currentNodeIndex);
+    }
+
+    void StartQuestDialogue()
+    {
+        isDialogueActive = true;
+        playerController = FindAnyObjectByType<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.SetMovementBlocked(true);
+        }
+
+        SetInteractionVisible(false);
+        SetDialogueVisible(true);
+        ShowQuestNode();
+    }
+
+    void ShowQuestNode()
+    {
+        ClearChoices();
+
+        if (nameText != null)
+        {
+            nameText.text = "Незнакомец";
+        }
+
+        if (choicesPanel == null || choiceButtonPrefab == null)
+        {
+            Debug.LogWarning("ChoiceDialogue UI is not fully assigned.");
+            return;
+        }
+
+        if (!DemoQuest.IsQuestStarted)
+        {
+            SetNpcText("Ты ищешь путь дальше? В соседней комнате есть головоломка. Реши ее, и откроется проход к тайнику.");
+            AddQuestChoice("Я решу головоломку", () =>
+            {
+                DemoQuest.StartQuest();
+                EndDialogue();
+            });
+            return;
+        }
+
+        if (!DemoQuest.IsPuzzleSolved)
+        {
+            SetNpcText("Проход к комнате с головоломкой открыт. Вернись ко мне, когда найдешь, что она скрывает.");
+            AddQuestChoice("Пойду туда", EndDialogue);
+            return;
+        }
+
+        if (Inventory.GetCoins() < 3 && !DemoQuest.AreCoinsHandedIn)
+        {
+            SetNpcText("Фрагмент памяти открыл проход к тайнику. Там должны быть три монеты. Принеси их мне.");
+            AddQuestChoice("Соберу монеты", EndDialogue);
+            return;
+        }
+
+        if (!DemoQuest.AreCoinsHandedIn)
+        {
+            SetNpcText("Ты принесла три монеты. Я открою тебе путь вперед.");
+            AddQuestChoice("Отдать 3 монеты", () =>
+            {
+                if (Inventory.SpendCoins(3))
+                {
+                    DemoQuest.HandInCoins();
+                }
+
+                ShowQuestNode();
+            });
+            AddQuestChoice("Пока не отдавать", EndDialogue);
+            return;
+        }
+
+        SetNpcText("Путь вперед открыт. Иди дальше, пока воспоминание еще держит дверь.");
+        AddQuestChoice("Спасибо", EndDialogue);
+    }
+
+    void SetNpcText(string text)
+    {
+        if (npcText != null)
+        {
+            npcText.text = text;
+        }
+    }
+
+    void AddQuestChoice(string text, UnityEngine.Events.UnityAction onClick)
+    {
+        GameObject buttonObject = Instantiate(choiceButtonPrefab, choicesPanel.transform);
+        TMP_Text buttonText = buttonObject.GetComponentInChildren<TMP_Text>();
+        if (buttonText != null)
+        {
+            buttonText.text = text;
+        }
+
+        Button button = buttonObject.GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.AddListener(onClick);
+        }
     }
 
     void ShowNode(int nodeIndex)
