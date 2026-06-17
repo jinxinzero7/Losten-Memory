@@ -63,7 +63,7 @@ public class ChoiceDialogue : MonoBehaviour
 
     void StartDialogue()
     {
-        if (useDemoQuestDialogue)
+        if (useDemoQuestDialogue || ShouldUseQuestProgressDialogue())
         {
             StartQuestDialogue();
             return;
@@ -87,6 +87,11 @@ public class ChoiceDialogue : MonoBehaviour
         SetInteractionVisible(false);
         SetDialogueVisible(true);
         ShowNode(currentNodeIndex);
+    }
+
+    bool ShouldUseQuestProgressDialogue()
+    {
+        return DemoQuest.IsPuzzleSolved;
     }
 
     void StartQuestDialogue()
@@ -136,7 +141,8 @@ public class ChoiceDialogue : MonoBehaviour
             return;
         }
 
-        if (Inventory.GetCoins() < 3 && !DemoQuest.AreCoinsHandedIn)
+        int questCoinCount = Mathf.Max(Inventory.GetCoins(), DemoQuest.CollectedCoinCount);
+        if (questCoinCount < 3 && !DemoQuest.AreCoinsHandedIn)
         {
             SetNpcText("Фрагмент памяти открыл проход к тайнику. Там должны быть три монеты. Принеси их мне.");
             AddQuestChoice("Соберу монеты", EndDialogue);
@@ -148,7 +154,7 @@ public class ChoiceDialogue : MonoBehaviour
             SetNpcText("Ты принесла три монеты. Я открою тебе путь вперед.");
             AddQuestChoice("Отдать 3 монеты", () =>
             {
-                if (Inventory.SpendCoins(3))
+                if (Inventory.SpendCoins(3) || DemoQuest.CollectedCoinCount >= 3)
                 {
                     DemoQuest.HandInCoins();
                     DemoSceneBootstrap.EnsureFinalDoor();

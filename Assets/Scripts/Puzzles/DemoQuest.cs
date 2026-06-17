@@ -12,6 +12,7 @@ public static class DemoQuest
     public static bool IsPuzzleSolved => isPuzzleSolved;
     public static bool AreCoinsHandedIn => areCoinsHandedIn;
     public static bool IsFinalPathOpen => isFinalPathOpen;
+    public static int CollectedCoinCount => collectedCoins.Count;
 
     public static void StartQuest()
     {
