@@ -25,6 +25,12 @@ public class PuzzleAuto : MonoBehaviour
 
     void Start()
     {
+        if (SceneManager.GetActiveScene().name == "GameScene4")
+        {
+            DemoSceneBootstrap.InitializeCurrentScene();
+            return;
+        }
+
         if (DemoQuest.IsPuzzleSolved)
         {
             isWin = true;

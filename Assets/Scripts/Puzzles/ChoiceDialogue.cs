@@ -45,6 +45,7 @@ public class ChoiceDialogue : MonoBehaviour
         ConfigureInteractionText();
         SetDialogueVisible(false);
         SetInteractionVisible(false);
+        DemoSceneBootstrap.InitializeCurrentScene();
     }
 
     void Update()
@@ -149,6 +150,7 @@ public class ChoiceDialogue : MonoBehaviour
                 if (Inventory.SpendCoins(3))
                 {
                     DemoQuest.HandInCoins();
+                    DemoSceneBootstrap.EnsureFinalDoor();
                 }
 
                 ShowQuestNode();
