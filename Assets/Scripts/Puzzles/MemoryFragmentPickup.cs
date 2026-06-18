@@ -25,10 +25,13 @@ public class MemoryFragmentPickup : MonoBehaviour
 
     private void Update()
     {
-        if (!playerNear || collected || !Input.GetKeyDown(KeyCode.E)) return;
+        if (!collected && DemoQuest.IsMemoryUnlocked(MemoryKey))
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-        collected = true;
-        DemoQuest.UnlockMemory(MemoryKey);
+        if (!playerNear || collected || !Input.GetKeyDown(KeyCode.E)) return;
 
         string title = memory != null && !string.IsNullOrWhiteSpace(memory.memoryTitle)
             ? memory.memoryTitle
@@ -40,6 +43,8 @@ public class MemoryFragmentPickup : MonoBehaviour
             ? memory.cutsceneText
             : fallbackCutsceneText;
 
+        collected = true;
+        DemoQuest.UnlockMemory(MemoryKey, title);
         Inventory.AddMemory(title);
         MemoryPresentation.Show(title, description, cutsceneText, memory != null ? memory.memoryImage : null);
         gameObject.SetActive(false);

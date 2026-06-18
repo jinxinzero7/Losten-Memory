@@ -79,10 +79,17 @@ public class CoinRoomController : MonoBehaviour
 
     private static void CreateCoin(string coinId, Vector2 position)
     {
-        if (DemoQuest.IsCoinCollected(coinId)) return;
-        if (GameObject.Find("QuestCoin_" + coinId) != null) return;
+        string objectName = "QuestCoin_" + coinId;
+        GameObject existingCoin = GameObject.Find(objectName);
+        if (DemoQuest.IsCoinCollected(coinId))
+        {
+            if (existingCoin != null) Destroy(existingCoin);
+            return;
+        }
 
-        GameObject coin = new GameObject("QuestCoin_" + coinId);
+        if (existingCoin != null) return;
+
+        GameObject coin = new GameObject(objectName);
         coin.transform.position = position;
         coin.transform.localScale = Vector3.one * 0.45f;
 

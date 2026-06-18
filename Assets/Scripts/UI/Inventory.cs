@@ -36,6 +36,7 @@ public class Inventory : MonoBehaviour
         }
         else
         {
+            Instance.CopyConfigurationFrom(this);
             Destroy(gameObject);
         }
     }
@@ -95,6 +96,7 @@ public class Inventory : MonoBehaviour
     // ========== ПРЕДМЕТЫ ==========
     public static void AddItem(string itemName)
     {
+        EnsureInstance();
         if (Instance == null)
         {
             Debug.LogError("Inventory.Instance = NULL!");
@@ -105,6 +107,7 @@ public class Inventory : MonoBehaviour
         {
             Instance.items.Add(itemName);
             Instance.UpdateInventoryUI();
+            SaveGameService.RequestAutosave();
         }
     }
 
@@ -119,14 +122,17 @@ public class Inventory : MonoBehaviour
         if (Instance == null) return;
         Instance.items.Remove(itemName);
         Instance.UpdateInventoryUI();
+        SaveGameService.RequestAutosave();
     }
 
     // ========== МОНЕТКИ ==========
     public static void AddCoins(int amount)
     {
+        EnsureInstance();
         if (Instance == null) return;
         Instance.coins += amount;
         Instance.UpdateInventoryUI();
+        SaveGameService.RequestAutosave();
     }
 
     public static int GetCoins()
@@ -141,18 +147,21 @@ public class Inventory : MonoBehaviour
 
         Instance.coins -= amount;
         Instance.UpdateInventoryUI();
+        SaveGameService.RequestAutosave();
         return true;
     }
 
     // ========== ВОСПОМИНАНИЯ ==========
     public static void AddMemory(string memoryName)
     {
+        EnsureInstance();
         if (Instance == null) return;
 
         if (!Instance.memories.Contains(memoryName))
         {
             Instance.memories.Add(memoryName);
             Instance.UpdateInventoryUI();
+            SaveGameService.RequestAutosave();
         }
     }
 
@@ -170,6 +179,54 @@ public class Inventory : MonoBehaviour
         Instance.memories.Clear();
         Instance.coins = 0;
         Instance.UpdateInventoryUI();
+    }
+
+    public static List<string> GetItems()
+    {
+        return Instance == null ? new List<string>() : new List<string>(Instance.items);
+    }
+
+    public static List<string> GetMemories()
+    {
+        return Instance == null ? new List<string>() : new List<string>(Instance.memories);
+    }
+
+    public static void Restore(IEnumerable<string> restoredItems, IEnumerable<string> restoredMemories, int restoredCoins)
+    {
+        EnsureInstance();
+
+        Instance.items.Clear();
+        if (restoredItems != null) Instance.items.AddRange(restoredItems);
+
+        Instance.memories.Clear();
+        if (restoredMemories != null) Instance.memories.AddRange(restoredMemories);
+
+        Instance.coins = Mathf.Max(0, restoredCoins);
+        Instance.FindUIPanels();
+        Instance.UpdateInventoryUI();
+    }
+
+    public static void EnsureInstance()
+    {
+        if (Instance != null) return;
+
+        GameObject inventoryObject = new GameObject("RuntimeInventory");
+        inventoryObject.AddComponent<Inventory>();
+    }
+
+    private void CopyConfigurationFrom(Inventory source)
+    {
+        if (source == null) return;
+
+        inventoryPanelName = source.inventoryPanelName;
+        memoriesPanelName = source.memoriesPanelName;
+        itemSlotPrefab = source.itemSlotPrefab;
+        warnWhenPanelsMissing = source.warnWhenPanelsMissing;
+        keyIcon = source.keyIcon;
+        coinIcon = source.coinIcon;
+        memoryIcon = source.memoryIcon;
+        FindUIPanels();
+        UpdateInventoryUI();
     }
 
     // ========== UI ==========

@@ -29,6 +29,7 @@ public class KeyInventory : MonoBehaviour
         if (!collectedKeys.Contains(keyID))
         {
             collectedKeys.Add(keyID);
+            SaveGameService.RequestAutosave();
         }
     }
 
@@ -40,5 +41,19 @@ public class KeyInventory : MonoBehaviour
     public static void ResetAll()
     {
         collectedKeys.Clear();
+    }
+
+    public static List<string> GetCollectedKeys()
+    {
+        return new List<string>(collectedKeys);
+    }
+
+    public static void Restore(IEnumerable<string> keyIds)
+    {
+        collectedKeys.Clear();
+        if (keyIds != null)
+        {
+            collectedKeys.AddRange(keyIds);
+        }
     }
 }
