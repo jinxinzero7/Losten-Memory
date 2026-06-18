@@ -7,6 +7,7 @@ public static class DemoQuest
     private static bool areCoinsHandedIn;
     private static bool isFinalPathOpen;
     private static readonly HashSet<string> collectedCoins = new HashSet<string>();
+    private static readonly HashSet<string> unlockedMemories = new HashSet<string>();
 
     public static bool IsQuestStarted => isQuestStarted;
     public static bool IsPuzzleSolved => isPuzzleSolved;
@@ -38,6 +39,7 @@ public static class DemoQuest
         areCoinsHandedIn = false;
         isFinalPathOpen = false;
         collectedCoins.Clear();
+        unlockedMemories.Clear();
     }
 
     public static bool IsCoinCollected(string coinId)
@@ -50,6 +52,19 @@ public static class DemoQuest
         if (!string.IsNullOrWhiteSpace(coinId))
         {
             collectedCoins.Add(coinId);
+        }
+    }
+
+    public static bool IsMemoryUnlocked(string memoryKey)
+    {
+        return !string.IsNullOrWhiteSpace(memoryKey) && unlockedMemories.Contains(memoryKey);
+    }
+
+    public static void UnlockMemory(string memoryKey)
+    {
+        if (!string.IsNullOrWhiteSpace(memoryKey))
+        {
+            unlockedMemories.Add(memoryKey);
         }
     }
 }
