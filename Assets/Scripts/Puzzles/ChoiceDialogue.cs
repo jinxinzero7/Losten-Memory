@@ -144,7 +144,7 @@ public class ChoiceDialogue : MonoBehaviour
         int questCoinCount = Mathf.Max(Inventory.GetCoins(), DemoQuest.CollectedCoinCount);
         if (questCoinCount < 3 && !DemoQuest.AreCoinsHandedIn)
         {
-            SetNpcText("Фрагмент памяти открыл проход к тайнику. Там должны быть три монеты. Принеси их мне.");
+            SetNpcText("Монеты разбросаны по комнатам, через которые ты уже прошла. Найди все три и принеси их мне.");
             AddQuestChoice("Соберу монеты", EndDialogue);
             return;
         }

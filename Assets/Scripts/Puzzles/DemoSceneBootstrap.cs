@@ -5,9 +5,18 @@ using UnityEngine.UI;
 
 public static class DemoSceneBootstrap
 {
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void InitializeAfterSceneLoad()
+    {
+        InitializeCurrentScene();
+    }
+
     public static void InitializeCurrentScene()
     {
         string sceneName = SceneManager.GetActiveScene().name;
+
+        CoinRoomController.EnsureSceneCoin();
+        QuestCoinCounter.EnsureCreated();
 
         if (sceneName == "GameScene2")
         {

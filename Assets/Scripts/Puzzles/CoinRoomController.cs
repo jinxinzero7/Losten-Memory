@@ -1,15 +1,27 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CoinRoomController : MonoBehaviour
 {
-    private static readonly Vector2[] CoinPositions =
-    {
-        new Vector2(7f, -2.45f),
-        new Vector2(9f, -2.15f),
-        new Vector2(11f, -2.45f)
-    };
-
     private bool isUnlocked;
+
+    public static void EnsureSceneCoin()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        switch (sceneName)
+        {
+            case "Game":
+                CreateCoin("coin_game", new Vector2(-3.5f, -3.5f));
+                break;
+            case "GameScene2":
+                CreateCoin("coin_scene_2", new Vector2(4.5f, -3.2f));
+                break;
+            case "GameScene3" when DemoQuest.IsPuzzleSolved:
+                EnsureRoomUnlocked();
+                break;
+        }
+    }
 
     public static void EnsureRoomUnlocked()
     {
@@ -62,17 +74,14 @@ public class CoinRoomController : MonoBehaviour
 
     private void SpawnCoins()
     {
-        for (int i = 0; i < CoinPositions.Length; i++)
-        {
-            string coinId = "coin_room_" + (i + 1);
-            if (DemoQuest.IsCoinCollected(coinId)) continue;
-
-            CreateCoin(coinId, CoinPositions[i]);
-        }
+        CreateCoin("coin_scene_3", new Vector2(9f, -2.45f));
     }
 
-    private void CreateCoin(string coinId, Vector2 position)
+    private static void CreateCoin(string coinId, Vector2 position)
     {
+        if (DemoQuest.IsCoinCollected(coinId)) return;
+        if (GameObject.Find("QuestCoin_" + coinId) != null) return;
+
         GameObject coin = new GameObject("QuestCoin_" + coinId);
         coin.transform.position = position;
         coin.transform.localScale = Vector3.one * 0.45f;
@@ -90,7 +99,7 @@ public class CoinRoomController : MonoBehaviour
         pickup.coinID = coinId;
     }
 
-    private Sprite CreateCoinSprite()
+    private static Sprite CreateCoinSprite()
     {
         Texture2D texture = new Texture2D(32, 32);
         Color clear = new Color(0, 0, 0, 0);
