@@ -28,7 +28,7 @@ public class PuzzleBox : MonoBehaviour
         bool shouldShowHint = canInteract && puzzleController != null && !puzzleController.IsOpen();
         SetHintVisible(shouldShowHint);
 
-        if (canInteract && puzzleController != null && Input.GetKeyDown(KeyCode.E) && !puzzleController.IsOpen())
+        if (canInteract && puzzleController != null && GameInput.InteractPressed && !puzzleController.IsOpen())
         {
             puzzleController.OpenPuzzle();
             SetHintVisible(false);

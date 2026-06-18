@@ -12,7 +12,7 @@ public class DoorTransition : MonoBehaviour
 
     void Update()
     {
-        if (playerNear && Input.GetKeyDown(KeyCode.E))
+        if (playerNear && GameInput.InteractPressed)
         {
             if (CanOpen())
             {

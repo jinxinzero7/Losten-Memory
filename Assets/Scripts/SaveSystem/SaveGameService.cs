@@ -8,6 +8,7 @@ public class SaveGameService : MonoBehaviour
     public static SaveGameService Instance { get; private set; }
     public static bool HasSave => Instance != null && Instance.database.GetLatestSlot() != null;
     public static string DatabasePath => Instance != null ? Instance.database.DatabasePath : string.Empty;
+    public static bool IsRestoring => Instance != null && Instance.isRestoring;
 
     private SaveDatabase database;
     private int activeSlotId;
@@ -15,6 +16,7 @@ public class SaveGameService : MonoBehaviour
     private float sessionStartTime;
     private bool autosaveQueued;
     private SaveSlotRecord pendingRestore;
+    private bool isRestoring;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
@@ -42,7 +44,7 @@ public class SaveGameService : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F5))
+        if (GameInput.ManualSavePressed)
         {
             SaveNow();
         }
@@ -76,6 +78,7 @@ public class SaveGameService : MonoBehaviour
         Instance.basePlayTime = 0d;
         Instance.sessionStartTime = Time.realtimeSinceStartup;
         Instance.pendingRestore = null;
+        Instance.isRestoring = false;
         SceneManager.LoadScene("Game");
     }
 
@@ -90,6 +93,7 @@ public class SaveGameService : MonoBehaviour
         Instance.basePlayTime = slot.PlayTimeSeconds;
         Instance.sessionStartTime = Time.realtimeSinceStartup;
         Instance.pendingRestore = slot;
+        Instance.isRestoring = true;
         SceneManager.LoadScene(string.IsNullOrWhiteSpace(slot.CurrentScene) ? "Game" : slot.CurrentScene);
     }
 
@@ -168,6 +172,7 @@ public class SaveGameService : MonoBehaviour
         }
 
         DemoSceneBootstrap.InitializeCurrentScene();
+        isRestoring = false;
     }
 
     private IEnumerator DelayedAutosave()

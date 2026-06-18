@@ -21,7 +21,7 @@ public class MemoryPresentation : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (GameInput.CancelPressed)
         {
             Close();
         }

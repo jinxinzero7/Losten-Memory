@@ -31,7 +31,7 @@ public class MemoryFragmentPickup : MonoBehaviour
             return;
         }
 
-        if (!playerNear || collected || !Input.GetKeyDown(KeyCode.E)) return;
+        if (!playerNear || collected || !GameInput.InteractPressed) return;
 
         string title = memory != null && !string.IsNullOrWhiteSpace(memory.memoryTitle)
             ? memory.memoryTitle

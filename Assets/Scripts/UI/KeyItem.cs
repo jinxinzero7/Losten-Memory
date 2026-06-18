@@ -4,53 +4,51 @@ public class KeyItem : MonoBehaviour
 {
     public GameObject interactionText;
     public string keyID = "MainKey";
-    private bool playerNear = false;
 
-    void Start()
+    private bool playerNear;
+
+    private void Start()
     {
-        // Если ключ уже был взят - удаляем
         if (KeyInventory.IsKeyCollected(keyID))
         {
             Destroy(gameObject);
         }
     }
 
-    void Update()
+    private void Update()
     {
-        if (playerNear && Input.GetKeyDown(KeyCode.E))
+        if (!playerNear || !GameInput.InteractPressed) return;
+
+        if (Inventory.Instance == null)
         {
-            Debug.Log("Подбираем ключ!");
+            Debug.LogError("Inventory РЅРµ РЅР°Р№РґРµРЅ РЅР° СЃС†РµРЅРµ.");
+            return;
+        }
 
-            // Проверяем, что Inventory существует
-            if (Inventory.Instance == null)
-            {
-                Debug.LogError("Inventory не найден! Создайте объект Inventory на сцене.");
-                return;
-            }
+        Inventory.AddItem("Key");
+        KeyInventory.MarkKeyCollected(keyID);
+        Destroy(gameObject);
+    }
 
-            Inventory.AddItem("Key");
-            KeyInventory.MarkKeyCollected(keyID);
-            Destroy(gameObject);
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!other.CompareTag("Player")) return;
+
+        playerNear = true;
+        if (interactionText != null)
+        {
+            interactionText.SetActive(true);
         }
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
-        {
-            playerNear = true;
-            if (interactionText != null)
-                interactionText.SetActive(true);
-        }
-    }
+        if (!other.CompareTag("Player")) return;
 
-    void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
+        playerNear = false;
+        if (interactionText != null)
         {
-            playerNear = false;
-            if (interactionText != null)
-                interactionText.SetActive(false);
+            interactionText.SetActive(false);
         }
     }
 }

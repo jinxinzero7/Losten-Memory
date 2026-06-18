@@ -53,11 +53,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        movement.x = Input.GetAxisRaw("Horizontal");
-        movement.y = Input.GetAxisRaw("Vertical");
-
-        if (movement.magnitude > 1)
-            movement.Normalize();
+        movement = GameInput.Movement;
 
         bool isMoving = movement.x != 0 || movement.y != 0;
         animator.SetFloat("Speed", isMoving ? 1f : 0f);

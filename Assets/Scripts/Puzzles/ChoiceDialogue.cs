@@ -50,12 +50,12 @@ public class ChoiceDialogue : MonoBehaviour
 
     void Update()
     {
-        if (playerNear && !isDialogueActive && Input.GetKeyDown(KeyCode.E))
+        if (playerNear && !isDialogueActive && GameInput.InteractPressed)
         {
             StartDialogue();
         }
 
-        if (isDialogueActive && Input.GetKeyDown(KeyCode.Escape))
+        if (isDialogueActive && GameInput.CancelPressed)
         {
             EndDialogue();
         }
@@ -299,6 +299,11 @@ public class ChoiceDialogue : MonoBehaviour
         if (dialoguePanel != null)
         {
             dialoguePanel.SetActive(visible);
+        }
+
+        if (choicesPanel != null)
+        {
+            choicesPanel.SetActive(visible);
         }
     }
 

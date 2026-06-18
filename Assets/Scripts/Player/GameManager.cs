@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
@@ -10,6 +11,7 @@ public class GameManager : MonoBehaviour
     public bool isFirstLaunch = true;
 
     private bool hasSpawned = false;
+    private Coroutine teleportRoutine;
 
     void Awake()
     {
@@ -38,26 +40,40 @@ public class GameManager : MonoBehaviour
     {
         hasSpawned = false;
 
-        // Телепортируем ДО того, как игрок появится на экране
-        TeleportPlayerImmediately();
+        if (teleportRoutine != null)
+        {
+            StopCoroutine(teleportRoutine);
+            teleportRoutine = null;
+        }
+
+        if (scene.name == "MainMenu" || SaveGameService.IsRestoring) return;
+
+        teleportRoutine = StartCoroutine(TeleportPlayerWhenReady(scene.name));
     }
 
-    void TeleportPlayerImmediately()
+    IEnumerator TeleportPlayerWhenReady(string sceneName)
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null)
+        const int maxWaitFrames = 60;
+        for (int frame = 0; frame < maxWaitFrames; frame++)
         {
-            Debug.LogWarning("Player не найден, пробуем ещё раз...");
-            Invoke("TeleportPlayerImmediately", 0.01f);
-            return;
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                if (!hasSpawned)
+                {
+                    player.transform.position = GetSpawnPosition();
+                    hasSpawned = true;
+                }
+
+                teleportRoutine = null;
+                yield break;
+            }
+
+            yield return null;
         }
 
-        if (!hasSpawned)
-        {
-            Vector3 spawnPosition = GetSpawnPosition();
-            player.transform.position = spawnPosition;
-            hasSpawned = true;
-        }
+        Debug.LogWarning("Player не найден после загрузки сцены " + sceneName);
+        teleportRoutine = null;
     }
 
     Vector3 GetSpawnPosition()

@@ -40,13 +40,13 @@ public class PuzzleAuto : MonoBehaviour
 
     void Update()
     {
-        if (isOpen && Input.GetKeyDown(KeyCode.T))
+        if (isOpen && GameInput.SolvePuzzlePressed)
         {
             CompletePuzzle();
             return;
         }
 
-        if (isOpen && Time.frameCount > openedFrame && Input.GetKeyDown(KeyCode.E))
+        if (isOpen && Time.frameCount > openedFrame && GameInput.InteractPressed)
         {
             ClosePuzzle();
         }

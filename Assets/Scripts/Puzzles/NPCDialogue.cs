@@ -28,12 +28,12 @@ public class NPCDialogue : MonoBehaviour
     void Update()
     {
         // Начать диалог по нажатию E
-        if (playerNear && Input.GetKeyDown(KeyCode.E) && !isDialogueActive)
+        if (playerNear && GameInput.InteractPressed && !isDialogueActive)
         {
             StartDialogue();
         }
         // Пролистать диалог по ЛЕВОЙ КНОПКЕ МЫШИ
-        else if (isDialogueActive && Input.GetMouseButtonDown(0))  // 0 = левая кнопка
+        else if (isDialogueActive && GameInput.PrimaryClickPressed)
         {
             NextLine();
         }
