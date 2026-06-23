@@ -97,6 +97,7 @@ public class MemoryRecord
 public class GameSaveSnapshot
 {
     public bool IsQuestStarted;
+    public bool IsLockedDoorTried;
     public bool IsPuzzleSolved;
     public bool AreCoinsHandedIn;
     public bool IsFinalPathOpen;

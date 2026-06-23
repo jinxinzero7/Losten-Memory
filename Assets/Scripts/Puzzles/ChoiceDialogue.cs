@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class ChoiceDialogue : MonoBehaviour
@@ -39,6 +40,7 @@ public class ChoiceDialogue : MonoBehaviour
     private bool playerNear;
     private bool isDialogueActive;
     private PlayerController playerController;
+    private ThoughtPrompt interactionPrompt;
 
     void Start()
     {
@@ -63,6 +65,12 @@ public class ChoiceDialogue : MonoBehaviour
 
     void StartDialogue()
     {
+        if (ShouldUseSilentMonsterDialogue())
+        {
+            StartSilentDialogue();
+            return;
+        }
+
         if (useDemoQuestDialogue || ShouldUseQuestProgressDialogue())
         {
             StartQuestDialogue();
@@ -75,9 +83,14 @@ public class ChoiceDialogue : MonoBehaviour
             return;
         }
 
+        BeginDialogue();
+        ShowNode(0);
+    }
+
+    void BeginDialogue()
+    {
         currentNodeIndex = 0;
         isDialogueActive = true;
-        DemoQuest.StartQuest();
         playerController = FindAnyObjectByType<PlayerController>();
         if (playerController != null)
         {
@@ -86,36 +99,40 @@ public class ChoiceDialogue : MonoBehaviour
 
         SetInteractionVisible(false);
         SetDialogueVisible(true);
-        ShowNode(currentNodeIndex);
+    }
+
+    bool ShouldUseSilentMonsterDialogue()
+    {
+        return SceneManager.GetActiveScene().name == "GameScene2"
+            && !DemoQuest.IsLockedDoorTried
+            && !DemoQuest.IsQuestStarted
+            && !DemoQuest.IsPuzzleSolved;
     }
 
     bool ShouldUseQuestProgressDialogue()
     {
-        return DemoQuest.IsPuzzleSolved;
+        return DemoQuest.IsLockedDoorTried || DemoQuest.IsQuestStarted || DemoQuest.IsPuzzleSolved;
+    }
+
+    void StartSilentDialogue()
+    {
+        BeginDialogue();
+        ClearChoices();
+        SetSpeakerName("Незнакомец");
+        SetNpcText("...");
+        AddQuestChoice("Уйти", EndDialogue);
     }
 
     void StartQuestDialogue()
     {
-        isDialogueActive = true;
-        playerController = FindAnyObjectByType<PlayerController>();
-        if (playerController != null)
-        {
-            playerController.SetMovementBlocked(true);
-        }
-
-        SetInteractionVisible(false);
-        SetDialogueVisible(true);
+        BeginDialogue();
         ShowQuestNode();
     }
 
     void ShowQuestNode()
     {
         ClearChoices();
-
-        if (nameText != null)
-        {
-            nameText.text = "Незнакомец";
-        }
+        SetSpeakerName("Незнакомец");
 
         if (choicesPanel == null || choiceButtonPrefab == null)
         {
@@ -123,10 +140,17 @@ public class ChoiceDialogue : MonoBehaviour
             return;
         }
 
+        if (!DemoQuest.IsLockedDoorTried)
+        {
+            SetNpcText("...");
+            AddQuestChoice("Уйти", EndDialogue);
+            return;
+        }
+
         if (!DemoQuest.IsQuestStarted)
         {
-            SetNpcText("Ты ищешь путь дальше? В соседней комнате есть головоломка. Реши ее, и откроется проход к тайнику.");
-            AddQuestChoice("Я решу головоломку", () =>
+            SetNpcText("Дверь тебя не пустила? Тогда слушай: принеси мне три монеты, и я открою путь дальше. Одна монета рядом, остальные ищи в комнатах, через которые уже проходила.");
+            AddQuestChoice("Я найду монеты", () =>
             {
                 DemoQuest.StartQuest();
                 EndDialogue();
@@ -136,7 +160,7 @@ public class ChoiceDialogue : MonoBehaviour
 
         if (!DemoQuest.IsPuzzleSolved)
         {
-            SetNpcText("Проход к комнате с головоломкой открыт. Вернись ко мне, когда найдешь, что она скрывает.");
+            SetNpcText("Теперь иди в комнату с коробкой. Реши головоломку, потом проверь коробку ещё раз.");
             AddQuestChoice("Пойду туда", EndDialogue);
             return;
         }
@@ -144,14 +168,14 @@ public class ChoiceDialogue : MonoBehaviour
         int questCoinCount = Mathf.Max(Inventory.GetCoins(), DemoQuest.CollectedCoinCount);
         if (questCoinCount < 3 && !DemoQuest.AreCoinsHandedIn)
         {
-            SetNpcText("Монеты разбросаны по комнатам, через которые ты уже прошла. Найди все три и принеси их мне.");
+            SetNpcText("Монеты разбросаны по комнатам. Найди все три и возвращайся ко мне.");
             AddQuestChoice("Соберу монеты", EndDialogue);
             return;
         }
 
         if (!DemoQuest.AreCoinsHandedIn)
         {
-            SetNpcText("Ты принесла три монеты. Я открою тебе путь вперед.");
+            SetNpcText("Ты принесла три монеты. Сделка есть сделка: отдавай их, и проход откроется.");
             AddQuestChoice("Отдать 3 монеты", () =>
             {
                 if (Inventory.SpendCoins(3) || DemoQuest.CollectedCoinCount >= 3)
@@ -166,32 +190,8 @@ public class ChoiceDialogue : MonoBehaviour
             return;
         }
 
-        SetNpcText("Путь вперед открыт. Иди дальше, пока воспоминание еще держит дверь.");
+        SetNpcText("Путь открыт. Иди дальше, пока воспоминание ещё держит дверь.");
         AddQuestChoice("Спасибо", EndDialogue);
-    }
-
-    void SetNpcText(string text)
-    {
-        if (npcText != null)
-        {
-            npcText.text = text;
-        }
-    }
-
-    void AddQuestChoice(string text, UnityEngine.Events.UnityAction onClick)
-    {
-        GameObject buttonObject = Instantiate(choiceButtonPrefab, choicesPanel.transform);
-        TMP_Text buttonText = buttonObject.GetComponentInChildren<TMP_Text>();
-        if (buttonText != null)
-        {
-            buttonText.text = text;
-        }
-
-        Button button = buttonObject.GetComponent<Button>();
-        if (button != null)
-        {
-            button.onClick.AddListener(onClick);
-        }
     }
 
     void ShowNode(int nodeIndex)
@@ -203,17 +203,9 @@ public class ChoiceDialogue : MonoBehaviour
         }
 
         ClearChoices();
-
         DialogueNode node = dialogueNodes[nodeIndex];
-        if (nameText != null)
-        {
-            nameText.text = npcName;
-        }
-
-        if (npcText != null)
-        {
-            npcText.text = node.npcText;
-        }
+        SetSpeakerName(npcName);
+        SetNpcText(node.npcText);
 
         if (choicesPanel == null || choiceButtonPrefab == null)
         {
@@ -223,19 +215,7 @@ public class ChoiceDialogue : MonoBehaviour
 
         foreach (DialogueChoice choice in node.choices)
         {
-            GameObject buttonObject = Instantiate(choiceButtonPrefab, choicesPanel.transform);
-            TMP_Text buttonText = buttonObject.GetComponentInChildren<TMP_Text>();
-            if (buttonText != null)
-            {
-                buttonText.text = choice.choiceText;
-            }
-
-            Button button = buttonObject.GetComponent<Button>();
-            if (button != null)
-            {
-                DialogueChoice capturedChoice = choice;
-                button.onClick.AddListener(() => SelectChoice(capturedChoice));
-            }
+            AddChoiceButton(choice.choiceText, () => SelectChoice(choice));
         }
     }
 
@@ -264,6 +244,46 @@ public class ChoiceDialogue : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(choice.memoryReward))
         {
             Inventory.AddMemory(choice.memoryReward);
+        }
+    }
+
+    void SetSpeakerName(string speakerName)
+    {
+        if (nameText != null)
+        {
+            nameText.text = speakerName;
+        }
+    }
+
+    void SetNpcText(string text)
+    {
+        if (npcText != null)
+        {
+            npcText.text = text;
+        }
+    }
+
+    void AddQuestChoice(string text, UnityEngine.Events.UnityAction onClick)
+    {
+        AddChoiceButton(text, onClick);
+    }
+
+    void AddChoiceButton(string text, UnityEngine.Events.UnityAction onClick)
+    {
+        if (choicesPanel == null || choiceButtonPrefab == null) return;
+
+        GameObject buttonObject = Instantiate(choiceButtonPrefab, choicesPanel.transform);
+        TMP_Text buttonText = buttonObject.GetComponentInChildren<TMP_Text>();
+        if (buttonText != null)
+        {
+            buttonText.text = text;
+            buttonText.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+
+        Button button = buttonObject.GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.AddListener(onClick);
         }
     }
 
@@ -309,6 +329,13 @@ public class ChoiceDialogue : MonoBehaviour
 
     void SetInteractionVisible(bool visible)
     {
+        if (interactionPrompt != null)
+        {
+            if (visible) interactionPrompt.Show();
+            else interactionPrompt.Hide();
+            return;
+        }
+
         if (interactionText != null)
         {
             interactionText.SetActive(visible);
@@ -317,27 +344,8 @@ public class ChoiceDialogue : MonoBehaviour
 
     void ConfigureInteractionText()
     {
-        if (interactionText == null) return;
-
-        TMP_Text label = interactionText.GetComponent<TMP_Text>();
-        if (label == null)
-        {
-            label = interactionText.GetComponentInChildren<TMP_Text>(true);
-        }
-
-        if (label != null)
-        {
-            label.text = "E - говорить";
-            label.fontSize = 24f;
-            label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.alignment = TextAlignmentOptions.Center;
-        }
-
-        RectTransform rect = interactionText.GetComponent<RectTransform>();
-        if (rect != null)
-        {
-            rect.sizeDelta = new Vector2(280f, 60f);
-        }
+        interactionText = ThoughtPrompt.EnsurePrompt(interactionText, "NpcPrompt", "E - говорить", transform, new Vector3(0f, 1.65f, 0f));
+        interactionPrompt = ThoughtPrompt.Ensure(interactionText);
     }
 
     void OnTriggerEnter2D(Collider2D other)

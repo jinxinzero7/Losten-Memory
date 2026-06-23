@@ -79,6 +79,7 @@ public sealed class SaveDatabase : IDisposable
             connection.Execute("DELETE FROM Memories WHERE save_slot_id = ?", slotId);
 
             InsertQuestState(slotId, "quest_started", snapshot.IsQuestStarted, now);
+            InsertQuestState(slotId, "locked_door_tried", snapshot.IsLockedDoorTried, now);
             InsertQuestState(slotId, "puzzle_solved", snapshot.IsPuzzleSolved, now);
             InsertQuestState(slotId, "coins_handed_in", snapshot.AreCoinsHandedIn, now);
             InsertQuestState(slotId, "final_path_open", snapshot.IsFinalPathOpen, now);
@@ -124,6 +125,7 @@ public sealed class SaveDatabase : IDisposable
             .ToDictionary(row => row.QuestKey, row => row.State);
 
         snapshot.IsQuestStarted = IsEnabled(questStates, "quest_started");
+        snapshot.IsLockedDoorTried = IsEnabled(questStates, "locked_door_tried");
         snapshot.IsPuzzleSolved = IsEnabled(questStates, "puzzle_solved");
         snapshot.AreCoinsHandedIn = IsEnabled(questStates, "coins_handed_in");
         snapshot.IsFinalPathOpen = IsEnabled(questStates, "final_path_open");

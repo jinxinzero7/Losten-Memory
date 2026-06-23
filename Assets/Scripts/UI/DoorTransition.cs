@@ -9,19 +9,31 @@ public class DoorTransition : MonoBehaviour
     public bool requireFinalPathOpen;
     public GameObject interactionText;
     private bool playerNear = false;
+    private ThoughtPrompt interactionPrompt;
+
+    void Start()
+    {
+        interactionText = ThoughtPrompt.EnsurePrompt(interactionText, "DoorPrompt", "E - войти", transform, new Vector3(0f, 1.45f, 0f));
+        interactionPrompt = ThoughtPrompt.Ensure(interactionText);
+    }
 
     void Update()
     {
-        if (playerNear && GameInput.InteractPressed)
+        if (playerNear && GameInput.InteractPressed && !ScreenTransition.IsTransitioning)
         {
             if (CanOpen())
             {
-                if (GameManager.Instance != null)
+                ScreenTransition.LoadSceneWithFade(targetScene, () =>
                 {
-                    GameManager.Instance.SetSpawnPoint(transform.position);
-                }
-
-                SceneManager.LoadScene(targetScene);
+                    if (GameManager.Instance != null)
+                    {
+                        GameManager.Instance.PrepareSceneTransition(SceneManager.GetActiveScene().name, targetScene, transform.position);
+                    }
+                });
+            }
+            else
+            {
+                HandleBlockedDoor();
             }
         }
     }
@@ -35,12 +47,22 @@ public class DoorTransition : MonoBehaviour
         return true;
     }
 
+    void HandleBlockedDoor()
+    {
+        if (requireQuestStarted && !DemoQuest.IsQuestStarted)
+        {
+            DemoQuest.MarkLockedDoorTried();
+        }
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
             playerNear = true;
-            if (interactionText != null)
+            if (interactionPrompt != null)
+                interactionPrompt.Show();
+            else if (interactionText != null)
                 interactionText.SetActive(true);
         }
     }
@@ -50,7 +72,9 @@ public class DoorTransition : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerNear = false;
-            if (interactionText != null)
+            if (interactionPrompt != null)
+                interactionPrompt.Hide();
+            else if (interactionText != null)
                 interactionText.SetActive(false);
         }
     }

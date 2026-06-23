@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class Inventory : MonoBehaviour
 {
@@ -21,9 +22,12 @@ public class Inventory : MonoBehaviour
     public Sprite keyIcon;
     public Sprite coinIcon;
     public Sprite memoryIcon;
+    public Sprite inventoryCellSprite;
 
     private Transform inventoryPanel;
     private Transform memoriesPanel;
+    private const float SlotSize = 120f;
+    private const float IconSize = 58f;
 
     void Awake()
     {
@@ -62,6 +66,8 @@ public class Inventory : MonoBehaviour
     {
         inventoryPanel = FindPanel(inventoryPanelName);
         memoriesPanel = FindPanel(memoriesPanelName);
+        ConfigurePanelLayout(inventoryPanel);
+        ConfigurePanelLayout(memoriesPanel);
 
         if (warnWhenPanelsMissing && inventoryPanel == null && !string.IsNullOrWhiteSpace(inventoryPanelName))
         {
@@ -225,6 +231,7 @@ public class Inventory : MonoBehaviour
         keyIcon = source.keyIcon;
         coinIcon = source.coinIcon;
         memoryIcon = source.memoryIcon;
+        inventoryCellSprite = source.inventoryCellSprite;
         FindUIPanels();
         UpdateInventoryUI();
     }
@@ -232,7 +239,6 @@ public class Inventory : MonoBehaviour
     // ========== UI ==========
     void UpdateInventoryUI()
     {
-        // Обновляем панель предметов
         if (inventoryPanel != null)
         {
             foreach (Transform child in inventoryPanel)
@@ -240,28 +246,16 @@ public class Inventory : MonoBehaviour
 
             foreach (string item in items)
             {
-                if (itemSlotPrefab == null) continue;
-
-                GameObject slot = Instantiate(itemSlotPrefab, inventoryPanel);
-                Image icon = slot.GetComponent<Image>();
-
-                if (item == "Key" && keyIcon != null)
-                    icon.sprite = keyIcon;
+                Sprite iconSprite = item == "Key" ? GetKeyIcon() : null;
+                CreateSlot(inventoryPanel, iconSprite, string.Empty);
             }
 
-            // Монетки
-            if (coins > 0 && itemSlotPrefab != null)
+            if (coins > 0)
             {
-                GameObject coinSlot = Instantiate(itemSlotPrefab, inventoryPanel);
-                Image icon = coinSlot.GetComponent<Image>();
-                if (coinIcon != null) icon.sprite = coinIcon;
-
-                TMPro.TMP_Text text = coinSlot.GetComponentInChildren<TMPro.TMP_Text>();
-                if (text != null) text.text = coins.ToString();
+                CreateSlot(inventoryPanel, GetCoinIcon(), coins.ToString());
             }
         }
 
-        // Обновляем панель воспоминаний
         if (memoriesPanel != null)
         {
             foreach (Transform child in memoriesPanel)
@@ -269,15 +263,158 @@ public class Inventory : MonoBehaviour
 
             foreach (string memory in memories)
             {
-                if (itemSlotPrefab == null) continue;
-
-                GameObject slot = Instantiate(itemSlotPrefab, memoriesPanel);
-                Image icon = slot.GetComponent<Image>();
-                if (memoryIcon != null) icon.sprite = memoryIcon;
-
-                TMPro.TMP_Text text = slot.GetComponentInChildren<TMPro.TMP_Text>();
-                if (text != null) text.text = memory;
+                CreateSlot(memoriesPanel, memoryIcon, memory);
             }
         }
+    }
+
+    GameObject CreateSlot(Transform parent, Sprite iconSprite, string labelText)
+    {
+        GameObject slot = itemSlotPrefab != null
+            ? Instantiate(itemSlotPrefab, parent)
+            : CreateFallbackSlot(parent);
+
+        ApplySlotBackground(slot);
+
+        Image icon = GetOrCreateIcon(slot);
+        if (icon != null)
+        {
+            icon.sprite = iconSprite;
+            icon.color = iconSprite == null ? new Color(1f, 1f, 1f, 0f) : Color.white;
+            icon.preserveAspect = true;
+        }
+
+        ConfigureStackLabel(slot, labelText);
+        return slot;
+    }
+
+    GameObject CreateFallbackSlot(Transform parent)
+    {
+        GameObject slot = new GameObject("ItemSlot");
+        slot.transform.SetParent(parent, false);
+        RectTransform rect = slot.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(SlotSize, SlotSize);
+        slot.AddComponent<Image>();
+        return slot;
+    }
+
+    void ApplySlotBackground(GameObject slot)
+    {
+        Image background = slot.GetComponent<Image>();
+        if (background == null)
+        {
+            background = slot.AddComponent<Image>();
+        }
+
+        background.sprite = GetInventoryCellSprite();
+        background.color = Color.white;
+        background.type = background.sprite != null ? Image.Type.Sliced : Image.Type.Simple;
+    }
+
+    Image GetOrCreateIcon(GameObject slot)
+    {
+        Transform iconTransform = slot.transform.Find("Image");
+        if (iconTransform == null)
+        {
+            GameObject iconObject = new GameObject("Image");
+            iconObject.transform.SetParent(slot.transform, false);
+            iconTransform = iconObject.transform;
+
+            RectTransform rect = iconObject.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(IconSize, IconSize);
+            iconObject.AddComponent<Image>();
+        }
+        else
+        {
+            RectTransform rect = iconTransform.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(IconSize, IconSize);
+            }
+        }
+
+        return iconTransform.GetComponent<Image>();
+    }
+
+    void ConfigureStackLabel(GameObject slot, string labelText)
+    {
+        TMP_Text label = slot.GetComponentInChildren<TMP_Text>(true);
+        if (label == null)
+        {
+            GameObject labelObject = new GameObject("StackText");
+            labelObject.transform.SetParent(slot.transform, false);
+            label = labelObject.AddComponent<TextMeshProUGUI>();
+
+            RectTransform rect = labelObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-12f, 10f);
+            rect.sizeDelta = new Vector2(82f, 34f);
+        }
+
+        label.text = labelText;
+        label.fontSize = string.IsNullOrWhiteSpace(labelText) || labelText.Length <= 2 ? 28f : 18f;
+        label.color = Color.black;
+        label.alignment = TextAlignmentOptions.BottomRight;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        label.gameObject.SetActive(!string.IsNullOrWhiteSpace(labelText));
+    }
+
+    void ConfigurePanelLayout(Transform panel)
+    {
+        if (panel == null) return;
+
+        GridLayoutGroup grid = panel.GetComponent<GridLayoutGroup>();
+        if (grid != null)
+        {
+            grid.cellSize = new Vector2(SlotSize, SlotSize);
+            grid.spacing = new Vector2(12f, 12f);
+        }
+
+        RectTransform rect = panel.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            rect.sizeDelta = new Vector2(Mathf.Max(rect.sizeDelta.x, SlotSize * 3f + 24f), Mathf.Max(rect.sizeDelta.y, SlotSize));
+        }
+    }
+
+    Sprite GetInventoryCellSprite()
+    {
+        if (inventoryCellSprite != null) return inventoryCellSprite;
+
+        inventoryCellSprite = RuntimeSpriteLoader.LoadProjectSprite(
+            "Assets/Art/Sprites/interface/inventoryCell.PNG",
+            new Rect(18f, 746f, 148f, 166f),
+            100f);
+        return inventoryCellSprite;
+    }
+
+    Sprite GetKeyIcon()
+    {
+        if (keyIcon != null) return keyIcon;
+
+        keyIcon = RuntimeSpriteLoader.LoadProjectSprite(
+            "Assets/Art/Sprites/interface/Key.PNG",
+            new Rect(880f, 355f, 98f, 60f),
+            100f);
+        return keyIcon;
+    }
+
+    Sprite GetCoinIcon()
+    {
+        if (coinIcon != null) return coinIcon;
+
+        coinIcon = RuntimeSpriteLoader.LoadProjectSprite(
+            "Assets/Art/Sprites/coin_norm.png",
+            new Rect(13f, 17f, 47f, 35f),
+            48f);
+        return coinIcon;
     }
 }

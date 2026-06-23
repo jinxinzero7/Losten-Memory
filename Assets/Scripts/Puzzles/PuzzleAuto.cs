@@ -138,6 +138,11 @@ public class PuzzleAuto : MonoBehaviour
         return isOpen;
     }
 
+    public bool IsSolved()
+    {
+        return isWin;
+    }
+
     void OnTileClick(int x, int y)
     {
         if (isWin) return;
@@ -221,13 +226,7 @@ public class PuzzleAuto : MonoBehaviour
         DemoQuest.MarkPuzzleSolved();
         CoinRoomController.EnsureRoomUnlocked();
 
-        if (!string.IsNullOrWhiteSpace(memoryReward))
-        {
-            Inventory.AddMemory(memoryReward);
-        }
-
         ClosePuzzle();
-        ShowCompletionPanel();
     }
 
     public void ClosePuzzle()

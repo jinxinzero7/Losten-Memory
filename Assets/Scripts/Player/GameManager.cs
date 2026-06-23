@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
 
     private bool hasSpawned = false;
     private Coroutine teleportRoutine;
+    private string transitionSourceScene;
 
     void Awake()
     {
@@ -99,6 +100,15 @@ public class GameManager : MonoBehaviour
         GameObject spawnPoint = GameObject.Find("SpawnPoint");
         if (spawnPoint != null)
         {
+            if (currentScene == "GameScene3" && transitionSourceScene == "GameScene2")
+            {
+                Vector3 puzzleRoomEntry = GetPositionAboveDoor("DoorBack");
+                if (puzzleRoomEntry != Vector3.zero)
+                {
+                    return puzzleRoomEntry;
+                }
+            }
+
             return spawnPoint.transform.position;
         }
 
@@ -108,6 +118,33 @@ public class GameManager : MonoBehaviour
     public void SetSpawnPoint(Vector3 position)
     {
         lastSpawnPoint = position;
+    }
+
+    public void PrepareSceneTransition(string sourceScene, string targetScene, Vector3 sourceDoorPosition)
+    {
+        lastScene = sourceScene;
+        transitionSourceScene = sourceScene;
+        lastSpawnPoint = sourceDoorPosition;
+    }
+
+    private Vector3 GetPositionAboveDoor(string doorName)
+    {
+        GameObject door = GameObject.Find(doorName);
+        if (door == null) return Vector3.zero;
+
+        Collider2D collider = door.GetComponent<Collider2D>();
+        if (collider != null)
+        {
+            return new Vector3(door.transform.position.x, collider.bounds.max.y + 0.8f, 0f);
+        }
+
+        Renderer renderer = door.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            return new Vector3(door.transform.position.x, renderer.bounds.max.y + 0.8f, 0f);
+        }
+
+        return door.transform.position + Vector3.up * 1.4f;
     }
 
     public static void ResetFirstLaunch()

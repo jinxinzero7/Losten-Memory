@@ -3,6 +3,7 @@ using System.Collections.Generic;
 public static class DemoQuest
 {
     private static bool isQuestStarted;
+    private static bool lockedDoorTried;
     private static bool isPuzzleSolved;
     private static bool areCoinsHandedIn;
     private static bool isFinalPathOpen;
@@ -11,14 +12,22 @@ public static class DemoQuest
     private static readonly Dictionary<string, string> memoryTitles = new Dictionary<string, string>();
 
     public static bool IsQuestStarted => isQuestStarted;
+    public static bool IsLockedDoorTried => lockedDoorTried;
     public static bool IsPuzzleSolved => isPuzzleSolved;
     public static bool AreCoinsHandedIn => areCoinsHandedIn;
     public static bool IsFinalPathOpen => isFinalPathOpen;
     public static int CollectedCoinCount => collectedCoins.Count;
 
+    public static void MarkLockedDoorTried()
+    {
+        lockedDoorTried = true;
+        SaveGameService.RequestAutosave();
+    }
+
     public static void StartQuest()
     {
         isQuestStarted = true;
+        lockedDoorTried = true;
         SaveGameService.RequestAutosave();
     }
 
@@ -39,6 +48,7 @@ public static class DemoQuest
     public static void ResetAll()
     {
         isQuestStarted = false;
+        lockedDoorTried = false;
         isPuzzleSolved = false;
         areCoinsHandedIn = false;
         isFinalPathOpen = false;
@@ -101,6 +111,7 @@ public static class DemoQuest
 
     public static void Restore(
         bool questStarted,
+        bool restoredLockedDoorTried,
         bool puzzleSolved,
         bool coinsHandedIn,
         bool finalPathOpen,
@@ -109,6 +120,7 @@ public static class DemoQuest
         IEnumerable<string> memoryTitlesToRestore)
     {
         isQuestStarted = questStarted;
+        lockedDoorTried = restoredLockedDoorTried || questStarted;
         isPuzzleSolved = puzzleSolved;
         areCoinsHandedIn = coinsHandedIn;
         isFinalPathOpen = finalPathOpen;

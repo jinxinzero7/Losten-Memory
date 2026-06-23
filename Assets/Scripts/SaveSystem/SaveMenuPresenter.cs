@@ -14,7 +14,12 @@ public static class SaveMenuPresenter
 
         Button startButton = GameObject.Find("StartButton")?.GetComponent<Button>();
         Button quitButton = GameObject.Find("QuitButton")?.GetComponent<Button>();
-        if (startButton == null || GameObject.Find("ContinueButton") != null) return;
+        if (startButton == null) return;
+
+        ApplyButtonStyle(startButton);
+        if (quitButton != null) ApplyButtonStyle(quitButton);
+
+        if (GameObject.Find("ContinueButton") != null) return;
 
         SetButtonText(startButton, "Новая игра");
 
@@ -25,6 +30,7 @@ public static class SaveMenuPresenter
         continueButton.onClick.AddListener(SaveGameService.ContinueLatestGame);
         continueButton.interactable = SaveGameService.HasSave;
         SetButtonText(continueButton, "Продолжить");
+        ApplyButtonStyle(continueButton);
 
         RectTransform startRect = startButton.GetComponent<RectTransform>();
         RectTransform continueRect = continueButton.GetComponent<RectTransform>();
@@ -44,15 +50,23 @@ public static class SaveMenuPresenter
         Button quitButton = FindButton("QuitButton");
         PauseMenu pauseMenu = Object.FindAnyObjectByType<PauseMenu>(FindObjectsInactive.Include);
         if (resumeButton == null || menuButton == null || quitButton == null || pauseMenu == null) return;
-        if (FindButton("SaveButton") != null) return;
 
-        GameObject saveObject = Object.Instantiate(resumeButton.gameObject, resumeButton.transform.parent);
-        saveObject.name = "SaveButton";
-        Button saveButton = saveObject.GetComponent<Button>();
-        saveButton.onClick = new Button.ButtonClickedEvent();
-        saveButton.onClick.AddListener(pauseMenu.SaveGame);
-        SetButtonText(saveButton, "Сохранить");
+        ApplyButtonStyle(resumeButton);
+        ApplyButtonStyle(menuButton);
+        ApplyButtonStyle(quitButton);
 
+        Button saveButton = FindButton("SaveButton");
+        if (saveButton == null)
+        {
+            GameObject saveObject = Object.Instantiate(resumeButton.gameObject, resumeButton.transform.parent);
+            saveObject.name = "SaveButton";
+            saveButton = saveObject.GetComponent<Button>();
+            saveButton.onClick = new Button.ButtonClickedEvent();
+            saveButton.onClick.AddListener(pauseMenu.SaveGame);
+            SetButtonText(saveButton, "Сохранить");
+        }
+
+        ApplyButtonStyle(saveButton);
         SetButtonY(resumeButton, 75f);
         SetButtonY(saveButton, 25f);
         SetButtonY(menuButton, -25f);
@@ -81,6 +95,24 @@ public static class SaveMenuPresenter
         if (label != null)
         {
             label.text = text;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+    }
+
+    private static void ApplyButtonStyle(Button button)
+    {
+        if (button == null) return;
+
+        Sprite buttonSprite = RuntimeSpriteLoader.LoadProjectSprite(
+            "Assets/Art/Sprites/interface/button.PNG",
+            new Rect(672f, 538f, 424f, 117f),
+            100f);
+        Image image = button.GetComponent<Image>();
+        if (image != null && buttonSprite != null)
+        {
+            image.sprite = buttonSprite;
+            image.color = Color.white;
+            image.type = Image.Type.Sliced;
         }
     }
 }

@@ -7,6 +7,7 @@ public class CoinPickup : MonoBehaviour
     public GameObject interactionText;
 
     private bool playerNear;
+    private ThoughtPrompt interactionPrompt;
 
     void Start()
     {
@@ -16,10 +17,8 @@ public class CoinPickup : MonoBehaviour
             return;
         }
 
-        if (interactionText != null)
-        {
-            interactionText.SetActive(false);
-        }
+        interactionText = ThoughtPrompt.EnsurePrompt(interactionText, "CoinPrompt", "E - взять", transform, new Vector3(0f, 0.8f, 0f), 300f);
+        interactionPrompt = ThoughtPrompt.Ensure(interactionText);
     }
 
     void Update()
@@ -37,7 +36,11 @@ public class CoinPickup : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = true;
-        if (interactionText != null)
+        if (interactionPrompt != null)
+        {
+            interactionPrompt.Show();
+        }
+        else if (interactionText != null)
         {
             interactionText.SetActive(true);
         }
@@ -48,7 +51,11 @@ public class CoinPickup : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = false;
-        if (interactionText != null)
+        if (interactionPrompt != null)
+        {
+            interactionPrompt.Hide();
+        }
+        else if (interactionText != null)
         {
             interactionText.SetActive(false);
         }

@@ -7,8 +7,14 @@ public class PuzzleBox : MonoBehaviour
     public GameObject hintText;
     public float interactionRadius = 2.5f;
     public bool playerNear;
+    public string rewardCoinId = "coin_scene_3";
+    public string memoryKey = "box_memory";
+    public string memoryTitle = "Воспоминание из коробки";
+    [TextArea] public string memoryDescription = "Пример описания фотокарточки из коробки.";
+    [TextArea] public string memoryCutsceneText = "Пример внутреннего монолога после найденного воспоминания.";
 
     private Transform player;
+    private ThoughtPrompt hintPrompt;
 
     void Start()
     {
@@ -25,12 +31,22 @@ public class PuzzleBox : MonoBehaviour
     void Update()
     {
         bool canInteract = playerNear || IsPlayerInRange();
-        bool shouldShowHint = canInteract && puzzleController != null && !puzzleController.IsOpen();
+        bool canTakeReward = CanTakeReward();
+        bool shouldShowHint = canInteract && puzzleController != null && !puzzleController.IsOpen()
+            && (!puzzleController.IsSolved() || canTakeReward);
         SetHintVisible(shouldShowHint);
 
         if (canInteract && puzzleController != null && GameInput.InteractPressed && !puzzleController.IsOpen())
         {
-            puzzleController.OpenPuzzle();
+            if (canTakeReward)
+            {
+                TakeReward();
+            }
+            else if (!puzzleController.IsSolved())
+            {
+                puzzleController.OpenPuzzle();
+            }
+
             SetHintVisible(false);
         }
     }
@@ -54,29 +70,60 @@ public class PuzzleBox : MonoBehaviour
 
     void ConfigureHint()
     {
-        if (hintText == null) return;
-
-        TMP_Text label = hintText.GetComponent<TMP_Text>();
-        if (label != null)
-        {
-            label.text = "Press E";
-            label.fontSize = 24f;
-            label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.alignment = TextAlignmentOptions.Center;
-        }
-
-        RectTransform rect = hintText.GetComponent<RectTransform>();
-        if (rect != null)
-        {
-            rect.sizeDelta = new Vector2(260f, 60f);
-        }
+        hintText = ThoughtPrompt.EnsurePrompt(hintText, "PuzzleBoxPrompt", "E - открыть", transform, new Vector3(0f, 1.35f, 0f));
+        hintPrompt = ThoughtPrompt.Ensure(hintText);
     }
 
     void SetHintVisible(bool visible)
     {
-        if (hintText != null)
+        if (hintPrompt != null)
+        {
+            if (visible)
+            {
+                UpdateHintText();
+                hintPrompt.Show();
+            }
+            else
+            {
+                hintPrompt.Hide();
+            }
+        }
+        else if (hintText != null)
         {
             hintText.SetActive(visible);
+        }
+    }
+
+    void UpdateHintText()
+    {
+        if (hintText == null || puzzleController == null) return;
+
+        string text = puzzleController.IsSolved() && CanTakeReward()
+            ? "E - забрать"
+            : "E - открыть";
+        ThoughtPrompt.ConfigureLabel(hintText, text, 320f);
+    }
+
+    bool CanTakeReward()
+    {
+        return puzzleController != null
+            && puzzleController.IsSolved()
+            && (!DemoQuest.IsCoinCollected(rewardCoinId) || !DemoQuest.IsMemoryUnlocked(memoryKey));
+    }
+
+    void TakeReward()
+    {
+        if (!DemoQuest.IsCoinCollected(rewardCoinId))
+        {
+            Inventory.AddCoins(1);
+            DemoQuest.MarkCoinCollected(rewardCoinId);
+        }
+
+        if (!DemoQuest.IsMemoryUnlocked(memoryKey))
+        {
+            DemoQuest.UnlockMemory(memoryKey, memoryTitle);
+            Inventory.AddMemory(memoryTitle);
+            MemoryPresentation.Show(memoryTitle, memoryDescription, memoryCutsceneText, null);
         }
     }
 

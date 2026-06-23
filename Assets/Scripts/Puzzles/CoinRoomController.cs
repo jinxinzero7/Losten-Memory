@@ -74,34 +74,67 @@ public class CoinRoomController : MonoBehaviour
 
     private void SpawnCoins()
     {
-        CreateCoin("coin_scene_3", new Vector2(9f, -2.45f));
     }
 
     private static void CreateCoin(string coinId, Vector2 position)
     {
         string objectName = "QuestCoin_" + coinId;
-        GameObject existingCoin = GameObject.Find(objectName);
+        GameObject existingCoin = FindSceneCoinObject(coinId, objectName);
         if (DemoQuest.IsCoinCollected(coinId))
         {
             if (existingCoin != null) Destroy(existingCoin);
             return;
         }
 
-        if (existingCoin != null) return;
+        if (existingCoin != null)
+        {
+            ConfigureCoin(existingCoin, coinId);
+            return;
+        }
 
         GameObject coin = new GameObject(objectName);
         coin.transform.position = position;
         coin.transform.localScale = Vector3.one * 0.45f;
+        ConfigureCoin(coin, coinId);
+    }
 
-        SpriteRenderer renderer = coin.AddComponent<SpriteRenderer>();
-        renderer.sprite = CreateCoinSprite();
+    private static GameObject FindSceneCoinObject(string coinId, string objectName)
+    {
+        GameObject coin = GameObject.Find(objectName);
+        if (coin != null) return coin;
+
+        coin = GameObject.Find(coinId);
+        if (coin != null) return coin;
+
+        return GameObject.Find(coinId.Replace("_", " "));
+    }
+
+    private static void ConfigureCoin(GameObject coin, string coinId)
+    {
+        coin.name = "QuestCoin_" + coinId;
+
+        SpriteRenderer renderer = coin.GetComponent<SpriteRenderer>();
+        if (renderer == null)
+        {
+            renderer = coin.AddComponent<SpriteRenderer>();
+        }
+        renderer.sprite = RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/coin_norm.png", new Rect(13f, 17f, 47f, 35f), 48f)
+            ?? CreateCoinSprite();
         renderer.sortingOrder = 5;
 
-        CircleCollider2D collider = coin.AddComponent<CircleCollider2D>();
+        CircleCollider2D collider = coin.GetComponent<CircleCollider2D>();
+        if (collider == null)
+        {
+            collider = coin.AddComponent<CircleCollider2D>();
+        }
         collider.isTrigger = true;
         collider.radius = 0.8f;
 
-        CoinPickup pickup = coin.AddComponent<CoinPickup>();
+        CoinPickup pickup = coin.GetComponent<CoinPickup>();
+        if (pickup == null)
+        {
+            pickup = coin.AddComponent<CoinPickup>();
+        }
         pickup.coinValue = 1;
         pickup.coinID = coinId;
     }

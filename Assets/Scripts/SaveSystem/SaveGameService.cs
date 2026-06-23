@@ -148,6 +148,7 @@ public class SaveGameService : MonoBehaviour
         GameSaveSnapshot snapshot = database.LoadSnapshot(slot.Id);
         DemoQuest.Restore(
             snapshot.IsQuestStarted,
+            snapshot.IsLockedDoorTried,
             snapshot.IsPuzzleSolved,
             snapshot.AreCoinsHandedIn,
             snapshot.IsFinalPathOpen,
@@ -187,6 +188,7 @@ public class SaveGameService : MonoBehaviour
         return new GameSaveSnapshot
         {
             IsQuestStarted = DemoQuest.IsQuestStarted,
+            IsLockedDoorTried = DemoQuest.IsLockedDoorTried,
             IsPuzzleSolved = DemoQuest.IsPuzzleSolved,
             AreCoinsHandedIn = DemoQuest.AreCoinsHandedIn,
             IsFinalPathOpen = DemoQuest.IsFinalPathOpen,

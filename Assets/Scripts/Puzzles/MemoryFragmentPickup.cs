@@ -7,9 +7,11 @@ public class MemoryFragmentPickup : MonoBehaviour
     public string fallbackTitle = "Воспоминание 1";
     [TextArea] public string fallbackDescription = "Пример описания найденной фотокарточки.";
     [TextArea] public string fallbackCutsceneText = "Пример внутреннего монолога. Героиня начинает узнавать место на фотографии.";
+    public GameObject interactionText;
 
     private bool playerNear;
     private bool collected;
+    private ThoughtPrompt interactionPrompt;
 
     private string MemoryKey => memory != null && !string.IsNullOrWhiteSpace(memory.memoryKey)
         ? memory.memoryKey
@@ -20,7 +22,11 @@ public class MemoryFragmentPickup : MonoBehaviour
         if (DemoQuest.IsMemoryUnlocked(MemoryKey))
         {
             Destroy(gameObject);
+            return;
         }
+
+        interactionText = ThoughtPrompt.EnsurePrompt(interactionText, "MemoryPrompt", "E - воспоминание", transform, new Vector3(0f, 1.1f, 0f), 380f);
+        interactionPrompt = ThoughtPrompt.Ensure(interactionText);
     }
 
     private void Update()
@@ -44,6 +50,11 @@ public class MemoryFragmentPickup : MonoBehaviour
             : fallbackCutsceneText;
 
         collected = true;
+        if (interactionPrompt != null)
+        {
+            interactionPrompt.Hide();
+        }
+
         DemoQuest.UnlockMemory(MemoryKey, title);
         Inventory.AddMemory(title);
         MemoryPresentation.Show(title, description, cutsceneText, memory != null ? memory.memoryImage : null);
@@ -52,17 +63,23 @@ public class MemoryFragmentPickup : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player")) return;
+
+        playerNear = true;
+        if (interactionPrompt != null)
         {
-            playerNear = true;
+            interactionPrompt.Show();
         }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player")) return;
+
+        playerNear = false;
+        if (interactionPrompt != null)
         {
-            playerNear = false;
+            interactionPrompt.Hide();
         }
     }
 }

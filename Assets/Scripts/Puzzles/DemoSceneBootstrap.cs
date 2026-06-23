@@ -39,27 +39,16 @@ public static class DemoSceneBootstrap
     public static void EnsureFinalDoor()
     {
         if (!DemoQuest.IsFinalPathOpen) return;
-        if (GameObject.Find("FinalMemoryDoor") != null) return;
 
-        GameObject door = new GameObject("FinalMemoryDoor");
-        door.transform.position = new Vector3(12f, -1.2f, 0f);
-        door.transform.localScale = new Vector3(1.2f, 2.2f, 1f);
+        foreach (DoorTransition transition in Object.FindObjectsByType<DoorTransition>(FindObjectsInactive.Include))
+        {
+            if (transition.targetScene != "GameScene4") continue;
 
-        SpriteRenderer renderer = door.AddComponent<SpriteRenderer>();
-        renderer.sprite = CreateRectangleSprite(new Color(0.16f, 0.52f, 0.72f, 1f), new Color(0.65f, 0.9f, 1f, 1f));
-        renderer.sortingOrder = 4;
-
-        BoxCollider2D collider = door.AddComponent<BoxCollider2D>();
-        collider.isTrigger = true;
-        collider.size = new Vector2(1.2f, 2.2f);
-
-        DoorTransition transition = door.AddComponent<DoorTransition>();
-        transition.targetScene = "GameScene4";
-        transition.requireKey = false;
-        transition.requireQuestStarted = true;
-        transition.requireFinalPathOpen = true;
-
-        CreateWorldLabel("FinalDoorHint", "E - войти", new Vector3(12f, 0.55f, 0f));
+            transition.requireKey = false;
+            transition.requireQuestStarted = true;
+            transition.requireFinalPathOpen = true;
+            transition.gameObject.SetActive(true);
+        }
     }
 
     private static void SetupMemoryScene()
@@ -89,7 +78,6 @@ public static class DemoSceneBootstrap
         collider.radius = 0.8f;
 
         fragment.AddComponent<MemoryFragmentPickup>();
-        CreateWorldLabel("MemoryFragmentHint", "E - воспоминание", new Vector3(4.8f, -1.25f, 0f));
     }
 
     private static void DisableIfExists(string objectName)
