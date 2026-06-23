@@ -1515,7 +1515,7 @@ MonoBehaviour:
   requireKey: 0
   requireQuestStarted: 1
   requireFinalPathOpen: 1
-  interactionText: {fileID: 110579697}
+  interactionText: {fileID: 0}
 --- !u!212 &1233657020
 SpriteRenderer:
   serializedVersion: 2

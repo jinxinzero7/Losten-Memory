@@ -72,7 +72,7 @@ public class ThoughtPrompt : MonoBehaviour
 
     public static GameObject EnsurePrompt(GameObject target, string objectName, string text, Transform worldTarget, Vector3 offset, float width = 320f)
     {
-        if (target == null)
+        if (target == null || !IsPromptObject(target))
         {
             target = CreatePromptObject(objectName);
         }
@@ -86,6 +86,15 @@ public class ThoughtPrompt : MonoBehaviour
 
         target.SetActive(false);
         return target;
+    }
+
+    private static bool IsPromptObject(GameObject target)
+    {
+        if (target == null) return false;
+
+        if (target.GetComponent<RectTransform>() == null) return false;
+
+        return target.GetComponent<TMP_Text>() != null || target.GetComponentInChildren<TMP_Text>(true) != null;
     }
 
     public void AttachToWorld(Transform target, Vector3 offset)
