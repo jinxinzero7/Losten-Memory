@@ -15,7 +15,7 @@ public class CoinRoomController : MonoBehaviour
                 CreateCoin("coin_game", new Vector2(-3.5f, -3.5f));
                 break;
             case "GameScene2":
-                CreateCoin("coin_scene_2", new Vector2(4.5f, -3.2f));
+                CreateCoin("coin_scene_2", new Vector2(-3.73f, -4.75f));
                 break;
             case "GameScene3" when DemoQuest.IsPuzzleSolved:
                 EnsureRoomUnlocked();

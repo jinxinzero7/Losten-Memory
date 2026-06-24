@@ -1422,8 +1422,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PuzzleBox
   puzzleController: {fileID: 0}
   hintText: {fileID: 1044330421}
-  interactionRadius: 2.5
-  playerNear: 0
   rewardCoinId: coin_scene_3
   memoryKey: box_memory
   memoryTitle: "\u0412\u043E\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435
@@ -2371,6 +2369,10 @@ PrefabInstance:
     - target: {fileID: 5249315277983714764, guid: 972cf2e6ba94870458c186c4e73b1cb6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6335971985827426367, guid: 972cf2e6ba94870458c186c4e73b1cb6, type: 3}
+      propertyPath: m_SortingOrder
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

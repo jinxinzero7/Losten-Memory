@@ -1163,7 +1163,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6335971985827426367, guid: 972cf2e6ba94870458c186c4e73b1cb6, type: 3}
       propertyPath: m_SortingOrder
-      value: 3
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1648,6 +1648,7 @@ MonoBehaviour:
   coinIcon: {fileID: 4495923890394869606, guid: 099caa4665c820b4989ef0f61ad381e2, type: 3}
   memoryIcon: {fileID: 0}
   inventoryCellSprite: {fileID: 232465375870195537, guid: f82e228b73cc2514e98a5f12ee91d86d, type: 3}
+  dogFoodIcon: {fileID: 0}
 --- !u!4 &1181480174
 Transform:
   m_ObjectHideFlags: 0
