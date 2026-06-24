@@ -1,54 +1,51 @@
-using TMPro;
 using UnityEngine;
 
-public class PuzzleBox : MonoBehaviour
+public class PuzzleBox : MonoBehaviour, IWorldInteractable
 {
     public PuzzleAuto puzzleController;
     public GameObject hintText;
-    public float interactionRadius = 2.5f;
-    public bool playerNear;
     public string rewardCoinId = "coin_scene_3";
     public string memoryKey = "box_memory";
     public string memoryTitle = "Воспоминание из коробки";
     [TextArea] public string memoryDescription = "Пример описания фотокарточки из коробки.";
     [TextArea] public string memoryCutsceneText = "Пример внутреннего монолога после найденного воспоминания.";
 
-    private Transform player;
+    private bool playerNear;
     private ThoughtPrompt hintPrompt;
+    private PlayerInteractionController interactionController;
+    private Collider2D interactionCollider;
+
+    public Transform InteractionTransform => transform;
+    public int InteractionPriority => 80;
+    public bool CanInteract => playerNear
+        && puzzleController != null
+        && !puzzleController.IsOpen()
+        && !puzzleController.IsSolved();
 
     void Start()
     {
+        interactionCollider = GetComponent<Collider2D>();
         if (puzzleController == null)
         {
             puzzleController = FindAnyObjectByType<PuzzleAuto>();
         }
 
-        CachePlayer();
         ConfigureHint();
-        SetHintVisible(false);
+        SetInteractionHighlighted(false);
+        EnsureRewardsSpawned();
     }
 
     void Update()
     {
-        bool canInteract = playerNear || IsPlayerInRange();
-        bool canTakeReward = CanTakeReward();
-        bool shouldShowHint = canInteract && puzzleController != null && !puzzleController.IsOpen()
-            && (!puzzleController.IsSolved() || canTakeReward);
-        SetHintVisible(shouldShowHint);
+        EnsureRewardsSpawned();
+    }
 
-        if (canInteract && puzzleController != null && GameInput.InteractPressed && !puzzleController.IsOpen())
-        {
-            if (canTakeReward)
-            {
-                TakeReward();
-            }
-            else if (!puzzleController.IsSolved())
-            {
-                puzzleController.OpenPuzzle();
-            }
+    public void Interact()
+    {
+        if (!CanInteract) return;
 
-            SetHintVisible(false);
-        }
+        puzzleController.OpenPuzzle();
+        SetInteractionHighlighted(false);
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -56,8 +53,8 @@ public class PuzzleBox : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = true;
-        player = other.transform;
-        SetHintVisible(true);
+        interactionController = other.GetComponent<PlayerInteractionController>();
+        interactionController?.Register(this);
     }
 
     void OnTriggerExit2D(Collider2D other)
@@ -65,7 +62,32 @@ public class PuzzleBox : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = false;
-        SetHintVisible(false);
+        interactionController?.Unregister(this);
+        interactionController = null;
+    }
+
+    private void OnDisable()
+    {
+        interactionController?.Unregister(this);
+        SetInteractionHighlighted(false);
+    }
+
+    public Vector2 GetInteractionPoint(Vector2 playerPosition)
+    {
+        return interactionCollider != null ? interactionCollider.ClosestPoint(playerPosition) : (Vector2)transform.position;
+    }
+
+    public void SetInteractionHighlighted(bool highlighted)
+    {
+        if (hintPrompt != null)
+        {
+            if (highlighted) hintPrompt.Show();
+            else hintPrompt.Hide();
+        }
+        else if (hintText != null)
+        {
+            hintText.SetActive(highlighted);
+        }
     }
 
     void ConfigureHint()
@@ -74,78 +96,57 @@ public class PuzzleBox : MonoBehaviour
         hintPrompt = ThoughtPrompt.Ensure(hintText);
     }
 
-    void SetHintVisible(bool visible)
+    void EnsureRewardsSpawned()
     {
-        if (hintPrompt != null)
-        {
-            if (visible)
-            {
-                UpdateHintText();
-                hintPrompt.Show();
-            }
-            else
-            {
-                hintPrompt.Hide();
-            }
-        }
-        else if (hintText != null)
-        {
-            hintText.SetActive(visible);
-        }
-    }
+        if (puzzleController == null || !puzzleController.IsSolved()) return;
 
-    void UpdateHintText()
-    {
-        if (hintText == null || puzzleController == null) return;
-
-        string text = puzzleController.IsSolved() && CanTakeReward()
-            ? "E - забрать"
-            : "E - открыть";
-        ThoughtPrompt.ConfigureLabel(hintText, text, 320f);
-    }
-
-    bool CanTakeReward()
-    {
-        return puzzleController != null
-            && puzzleController.IsSolved()
-            && (!DemoQuest.IsCoinCollected(rewardCoinId) || !DemoQuest.IsMemoryUnlocked(memoryKey));
-    }
-
-    void TakeReward()
-    {
+        Vector3 basePosition = transform.position;
         if (!DemoQuest.IsCoinCollected(rewardCoinId))
         {
-            Inventory.AddCoins(1);
-            DemoQuest.MarkCoinCollected(rewardCoinId);
+            CoinRoomController.EnsureCoin(rewardCoinId, basePosition + new Vector3(0.95f, -0.45f, 0f), 0.45f);
         }
 
         if (!DemoQuest.IsMemoryUnlocked(memoryKey))
         {
-            DemoQuest.UnlockMemory(memoryKey, memoryTitle);
-            Inventory.AddMemory(memoryTitle);
-            MemoryPresentation.Show(memoryTitle, memoryDescription, memoryCutsceneText, null);
+            GameObject fragment = GameObject.Find("BoxMemoryFragment");
+            if (fragment == null)
+            {
+                fragment = new GameObject("BoxMemoryFragment");
+                fragment.transform.position = basePosition + new Vector3(-0.95f, -0.45f, 0f);
+                fragment.transform.localScale = Vector3.one * 0.42f;
+            }
+
+            SpriteRenderer renderer = fragment.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                renderer = fragment.AddComponent<SpriteRenderer>();
+            }
+
+            renderer.sprite = RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/places/newSprites/3/photo.PNG", 100f);
+            renderer.sortingOrder = 6;
+
+            Collider2D existingCollider = fragment.GetComponent<Collider2D>();
+            if (existingCollider == null)
+            {
+                CircleCollider2D circle = fragment.AddComponent<CircleCollider2D>();
+                circle.isTrigger = true;
+                circle.radius = 0.8f;
+            }
+            else
+            {
+                existingCollider.isTrigger = true;
+            }
+
+            MemoryFragmentPickup pickup = fragment.GetComponent<MemoryFragmentPickup>();
+            if (pickup == null)
+            {
+                pickup = fragment.AddComponent<MemoryFragmentPickup>();
+            }
+
+            pickup.fallbackMemoryKey = memoryKey;
+            pickup.fallbackTitle = memoryTitle;
+            pickup.fallbackDescription = memoryDescription;
+            pickup.fallbackCutsceneText = memoryCutsceneText;
         }
-    }
-
-    bool IsPlayerInRange()
-    {
-        if (player == null && !CachePlayer()) return false;
-
-        return Vector2.Distance(transform.position, player.position) <= interactionRadius;
-    }
-
-    bool CachePlayer()
-    {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject == null) return false;
-
-        player = playerObject.transform;
-        return true;
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, interactionRadius);
     }
 }

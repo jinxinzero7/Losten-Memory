@@ -23,6 +23,7 @@ public class Inventory : MonoBehaviour
     public Sprite coinIcon;
     public Sprite memoryIcon;
     public Sprite inventoryCellSprite;
+    public Sprite dogFoodIcon;
 
     private Transform inventoryPanel;
     private Transform memoriesPanel;
@@ -232,6 +233,7 @@ public class Inventory : MonoBehaviour
         coinIcon = source.coinIcon;
         memoryIcon = source.memoryIcon;
         inventoryCellSprite = source.inventoryCellSprite;
+        dogFoodIcon = source.dogFoodIcon;
         FindUIPanels();
         UpdateInventoryUI();
     }
@@ -246,7 +248,7 @@ public class Inventory : MonoBehaviour
 
             foreach (string item in items)
             {
-                Sprite iconSprite = item == "Key" ? GetKeyIcon() : null;
+                Sprite iconSprite = GetItemIcon(item);
                 CreateSlot(inventoryPanel, iconSprite, string.Empty);
             }
 
@@ -263,12 +265,18 @@ public class Inventory : MonoBehaviour
 
             foreach (string memory in memories)
             {
-                CreateSlot(memoriesPanel, memoryIcon, memory);
+                string memoryTitle = memory;
+                CreateSlot(memoriesPanel, GetMemoryIcon(), string.Empty, () => MemoryArchive.ShowByTitle(memoryTitle));
             }
         }
     }
 
     GameObject CreateSlot(Transform parent, Sprite iconSprite, string labelText)
+    {
+        return CreateSlot(parent, iconSprite, labelText, null);
+    }
+
+    GameObject CreateSlot(Transform parent, Sprite iconSprite, string labelText, UnityEngine.Events.UnityAction onClick)
     {
         GameObject slot = itemSlotPrefab != null
             ? Instantiate(itemSlotPrefab, parent)
@@ -285,6 +293,7 @@ public class Inventory : MonoBehaviour
         }
 
         ConfigureStackLabel(slot, labelText);
+        ConfigureClick(slot, onClick);
         return slot;
     }
 
@@ -367,6 +376,27 @@ public class Inventory : MonoBehaviour
         label.gameObject.SetActive(!string.IsNullOrWhiteSpace(labelText));
     }
 
+    void ConfigureClick(GameObject slot, UnityEngine.Events.UnityAction onClick)
+    {
+        Button button = slot.GetComponent<Button>();
+        if (onClick == null)
+        {
+            if (button != null)
+            {
+                Destroy(button);
+            }
+            return;
+        }
+
+        if (button == null)
+        {
+            button = slot.AddComponent<Button>();
+        }
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(onClick);
+    }
+
     void ConfigurePanelLayout(Transform panel)
     {
         if (panel == null) return;
@@ -405,6 +435,32 @@ public class Inventory : MonoBehaviour
             new Rect(880f, 355f, 98f, 60f),
             100f);
         return keyIcon;
+    }
+
+    Sprite GetMemoryIcon()
+    {
+        if (memoryIcon != null) return memoryIcon;
+
+        memoryIcon = RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/interface/photo.PNG", 100f)
+            ?? RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/places/newSprites/3/photo.PNG", 100f);
+        return memoryIcon;
+    }
+
+    Sprite GetItemIcon(string item)
+    {
+        if (item == "Key") return GetKeyIcon();
+        if (item == "DogFood") return GetDogFoodIcon();
+
+        return null;
+    }
+
+    Sprite GetDogFoodIcon()
+    {
+        if (dogFoodIcon != null) return dogFoodIcon;
+
+        dogFoodIcon = RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/places/newSprites/3/feed.png", 100f)
+            ?? RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/Maze/item_dog_food_bag.png", 100f);
+        return dogFoodIcon;
     }
 
     Sprite GetCoinIcon()

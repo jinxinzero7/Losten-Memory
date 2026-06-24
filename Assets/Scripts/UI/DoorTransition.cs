@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class DoorTransition : MonoBehaviour
+public class DoorTransition : MonoBehaviour, IWorldInteractable
 {
     public string targetScene;
     public bool requireKey = true;
@@ -10,31 +10,37 @@ public class DoorTransition : MonoBehaviour
     public GameObject interactionText;
     private bool playerNear = false;
     private ThoughtPrompt interactionPrompt;
+    private PlayerInteractionController interactionController;
+    private Collider2D interactionCollider;
+
+    public Transform InteractionTransform => transform;
+    public int InteractionPriority => 10;
+    public bool CanInteract => playerNear && !ScreenTransition.IsTransitioning;
 
     void Start()
     {
+        interactionCollider = GetComponent<Collider2D>();
         interactionText = ThoughtPrompt.EnsurePrompt(interactionText, "DoorPrompt", "E - войти", transform, new Vector3(0f, 1.45f, 0f));
         interactionPrompt = ThoughtPrompt.Ensure(interactionText);
     }
 
-    void Update()
+    public void Interact()
     {
-        if (playerNear && GameInput.InteractPressed && !ScreenTransition.IsTransitioning)
+        if (!CanInteract) return;
+
+        if (CanOpen())
         {
-            if (CanOpen())
+            ScreenTransition.LoadSceneWithFade(targetScene, () =>
             {
-                ScreenTransition.LoadSceneWithFade(targetScene, () =>
+                if (GameManager.Instance != null)
                 {
-                    if (GameManager.Instance != null)
-                    {
-                        GameManager.Instance.PrepareSceneTransition(SceneManager.GetActiveScene().name, targetScene, transform.position);
-                    }
-                });
-            }
-            else
-            {
-                HandleBlockedDoor();
-            }
+                    GameManager.Instance.PrepareSceneTransition(SceneManager.GetActiveScene().name, targetScene, transform.position);
+                }
+            });
+        }
+        else
+        {
+            HandleBlockedDoor();
         }
     }
 
@@ -60,10 +66,11 @@ public class DoorTransition : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerNear = true;
-            if (interactionPrompt != null)
-                interactionPrompt.Show();
-            else if (interactionText != null)
-                interactionText.SetActive(true);
+            interactionController = other.GetComponent<PlayerInteractionController>();
+            if (interactionController != null)
+            {
+                interactionController.Register(this);
+            }
         }
     }
 
@@ -72,10 +79,32 @@ public class DoorTransition : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerNear = false;
-            if (interactionPrompt != null)
-                interactionPrompt.Hide();
-            else if (interactionText != null)
-                interactionText.SetActive(false);
+            interactionController?.Unregister(this);
+            interactionController = null;
+        }
+    }
+
+    private void OnDisable()
+    {
+        interactionController?.Unregister(this);
+        SetInteractionHighlighted(false);
+    }
+
+    public Vector2 GetInteractionPoint(Vector2 playerPosition)
+    {
+        return interactionCollider != null ? interactionCollider.ClosestPoint(playerPosition) : (Vector2)transform.position;
+    }
+
+    public void SetInteractionHighlighted(bool highlighted)
+    {
+        if (interactionPrompt != null)
+        {
+            if (highlighted) interactionPrompt.Show();
+            else interactionPrompt.Hide();
+        }
+        else if (interactionText != null)
+        {
+            interactionText.SetActive(highlighted);
         }
     }
 }

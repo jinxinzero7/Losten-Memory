@@ -76,7 +76,17 @@ public class CoinRoomController : MonoBehaviour
     {
     }
 
+    public static void EnsureCoin(string coinId, Vector2 position, float scale = 0.45f)
+    {
+        CreateCoin(coinId, position, scale);
+    }
+
     private static void CreateCoin(string coinId, Vector2 position)
+    {
+        CreateCoin(coinId, position, 0.45f);
+    }
+
+    private static void CreateCoin(string coinId, Vector2 position, float scale)
     {
         string objectName = "QuestCoin_" + coinId;
         GameObject existingCoin = FindSceneCoinObject(coinId, objectName);
@@ -94,7 +104,7 @@ public class CoinRoomController : MonoBehaviour
 
         GameObject coin = new GameObject(objectName);
         coin.transform.position = position;
-        coin.transform.localScale = Vector3.one * 0.45f;
+        coin.transform.localScale = Vector3.one * scale;
         ConfigureCoin(coin, coinId);
     }
 

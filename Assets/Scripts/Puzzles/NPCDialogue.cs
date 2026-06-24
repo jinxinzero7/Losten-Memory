@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 
-public class NPCDialogue : MonoBehaviour
+public class NPCDialogue : MonoBehaviour, IWorldInteractable
 {
     [Header("Настройки диалога")]
     public string npcName = "Незнакомец";
@@ -16,9 +16,16 @@ public class NPCDialogue : MonoBehaviour
     private int currentLine = 0;
     private bool playerNear = false;
     private bool isDialogueActive = false;
+    private PlayerInteractionController interactionController;
+    private Collider2D interactionCollider;
+
+    public Transform InteractionTransform => transform;
+    public int InteractionPriority => 30;
+    public bool CanInteract => playerNear && !isDialogueActive;
 
     void Start()
     {
+        interactionCollider = GetComponent<Collider2D>();
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
         if (interactionText != null)
@@ -27,16 +34,18 @@ public class NPCDialogue : MonoBehaviour
 
     void Update()
     {
-        // Начать диалог по нажатию E
-        if (playerNear && GameInput.InteractPressed && !isDialogueActive)
-        {
-            StartDialogue();
-        }
         // Пролистать диалог по ЛЕВОЙ КНОПКЕ МЫШИ
-        else if (isDialogueActive && GameInput.PrimaryClickPressed)
+        if (isDialogueActive && GameInput.PrimaryClickPressed)
         {
             NextLine();
         }
+    }
+
+    public void Interact()
+    {
+        if (!CanInteract) return;
+
+        StartDialogue();
     }
 
     void StartDialogue()
@@ -83,8 +92,8 @@ public class NPCDialogue : MonoBehaviour
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
 
-        if (playerNear && interactionText != null)
-            interactionText.SetActive(true);
+        if (interactionText != null)
+            interactionText.SetActive(false);
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -92,8 +101,8 @@ public class NPCDialogue : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerNear = true;
-            if (!isDialogueActive && interactionText != null)
-                interactionText.SetActive(true);
+            interactionController = other.GetComponent<PlayerInteractionController>();
+            interactionController?.Register(this);
         }
     }
 
@@ -102,11 +111,31 @@ public class NPCDialogue : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerNear = false;
+            interactionController?.Unregister(this);
+            interactionController = null;
             if (interactionText != null)
                 interactionText.SetActive(false);
 
             if (isDialogueActive)
                 EndDialogue();
         }
+    }
+
+    void OnDisable()
+    {
+        interactionController?.Unregister(this);
+        if (interactionText != null)
+            interactionText.SetActive(false);
+    }
+
+    public Vector2 GetInteractionPoint(Vector2 playerPosition)
+    {
+        return interactionCollider != null ? interactionCollider.ClosestPoint(playerPosition) : (Vector2)transform.position;
+    }
+
+    public void SetInteractionHighlighted(bool highlighted)
+    {
+        if (interactionText != null)
+            interactionText.SetActive(highlighted);
     }
 }

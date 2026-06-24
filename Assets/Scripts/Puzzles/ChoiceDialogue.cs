@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class ChoiceDialogue : MonoBehaviour
+public class ChoiceDialogue : MonoBehaviour, IWorldInteractable
 {
     [Serializable]
     public class DialogueChoice
@@ -41,9 +41,16 @@ public class ChoiceDialogue : MonoBehaviour
     private bool isDialogueActive;
     private PlayerController playerController;
     private ThoughtPrompt interactionPrompt;
+    private PlayerInteractionController interactionController;
+    private Collider2D interactionCollider;
+
+    public Transform InteractionTransform => transform;
+    public int InteractionPriority => 30;
+    public bool CanInteract => playerNear && !isDialogueActive;
 
     void Start()
     {
+        interactionCollider = GetComponent<Collider2D>();
         ConfigureInteractionText();
         SetDialogueVisible(false);
         SetInteractionVisible(false);
@@ -52,15 +59,17 @@ public class ChoiceDialogue : MonoBehaviour
 
     void Update()
     {
-        if (playerNear && !isDialogueActive && GameInput.InteractPressed)
-        {
-            StartDialogue();
-        }
-
         if (isDialogueActive && GameInput.CancelPressed)
         {
             EndDialogue();
         }
+    }
+
+    public void Interact()
+    {
+        if (!CanInteract) return;
+
+        StartDialogue();
     }
 
     void StartDialogue()
@@ -298,10 +307,7 @@ public class ChoiceDialogue : MonoBehaviour
             playerController.SetMovementBlocked(false);
         }
 
-        if (playerNear)
-        {
-            SetInteractionVisible(true);
-        }
+        SetInteractionVisible(false);
     }
 
     void ClearChoices()
@@ -353,9 +359,10 @@ public class ChoiceDialogue : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = true;
-        if (!isDialogueActive)
+        interactionController = other.GetComponent<PlayerInteractionController>();
+        if (interactionController != null)
         {
-            SetInteractionVisible(true);
+            interactionController.Register(this);
         }
     }
 
@@ -364,11 +371,29 @@ public class ChoiceDialogue : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = false;
+        interactionController?.Unregister(this);
+        interactionController = null;
         SetInteractionVisible(false);
 
         if (isDialogueActive)
         {
             EndDialogue();
         }
+    }
+
+    void OnDisable()
+    {
+        interactionController?.Unregister(this);
+        SetInteractionVisible(false);
+    }
+
+    public Vector2 GetInteractionPoint(Vector2 playerPosition)
+    {
+        return interactionCollider != null ? interactionCollider.ClosestPoint(playerPosition) : (Vector2)transform.position;
+    }
+
+    public void SetInteractionHighlighted(bool highlighted)
+    {
+        SetInteractionVisible(highlighted);
     }
 }

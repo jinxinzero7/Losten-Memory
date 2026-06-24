@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MemoryFragmentPickup : MonoBehaviour
+public class MemoryFragmentPickup : MonoBehaviour, IWorldInteractable
 {
     public MemoryPiece memory;
     public string fallbackMemoryKey = "memory_01";
@@ -12,6 +12,12 @@ public class MemoryFragmentPickup : MonoBehaviour
     private bool playerNear;
     private bool collected;
     private ThoughtPrompt interactionPrompt;
+    private PlayerInteractionController interactionController;
+    private Collider2D interactionCollider;
+
+    public Transform InteractionTransform => transform;
+    public int InteractionPriority => 100;
+    public bool CanInteract => playerNear && !collected;
 
     private string MemoryKey => memory != null && !string.IsNullOrWhiteSpace(memory.memoryKey)
         ? memory.memoryKey
@@ -19,6 +25,7 @@ public class MemoryFragmentPickup : MonoBehaviour
 
     private void Start()
     {
+        interactionCollider = GetComponent<Collider2D>();
         if (DemoQuest.IsMemoryUnlocked(MemoryKey))
         {
             Destroy(gameObject);
@@ -27,6 +34,7 @@ public class MemoryFragmentPickup : MonoBehaviour
 
         interactionText = ThoughtPrompt.EnsurePrompt(interactionText, "MemoryPrompt", "E - воспоминание", transform, new Vector3(0f, 1.1f, 0f), 380f);
         interactionPrompt = ThoughtPrompt.Ensure(interactionText);
+        RegisterMemoryData();
     }
 
     private void Update()
@@ -34,30 +42,25 @@ public class MemoryFragmentPickup : MonoBehaviour
         if (!collected && DemoQuest.IsMemoryUnlocked(MemoryKey))
         {
             Destroy(gameObject);
-            return;
         }
+    }
 
-        if (!playerNear || collected || !GameInput.InteractPressed) return;
+    public void Interact()
+    {
+        if (!CanInteract) return;
 
-        string title = memory != null && !string.IsNullOrWhiteSpace(memory.memoryTitle)
-            ? memory.memoryTitle
-            : fallbackTitle;
-        string description = memory != null && !string.IsNullOrWhiteSpace(memory.memoryDescription)
-            ? memory.memoryDescription
-            : fallbackDescription;
-        string cutsceneText = memory != null && !string.IsNullOrWhiteSpace(memory.cutsceneText)
-            ? memory.cutsceneText
-            : fallbackCutsceneText;
+        string title = GetTitle();
+        string description = GetDescription();
+        string cutsceneText = GetCutsceneText();
+        Sprite image = GetImage();
 
         collected = true;
-        if (interactionPrompt != null)
-        {
-            interactionPrompt.Hide();
-        }
+        SetInteractionHighlighted(false);
 
+        MemoryArchive.Register(MemoryKey, title, description, cutsceneText, image);
         DemoQuest.UnlockMemory(MemoryKey, title);
         Inventory.AddMemory(title);
-        MemoryPresentation.Show(title, description, cutsceneText, memory != null ? memory.memoryImage : null);
+        MemoryPresentation.Show(title, description, cutsceneText, image);
         gameObject.SetActive(false);
     }
 
@@ -66,10 +69,8 @@ public class MemoryFragmentPickup : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = true;
-        if (interactionPrompt != null)
-        {
-            interactionPrompt.Show();
-        }
+        interactionController = other.GetComponent<PlayerInteractionController>();
+        interactionController?.Register(this);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -77,9 +78,68 @@ public class MemoryFragmentPickup : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = false;
+        interactionController?.Unregister(this);
+        interactionController = null;
+    }
+
+    private void OnDisable()
+    {
+        interactionController?.Unregister(this);
+        SetInteractionHighlighted(false);
+    }
+
+    public Vector2 GetInteractionPoint(Vector2 playerPosition)
+    {
+        return interactionCollider != null ? interactionCollider.ClosestPoint(playerPosition) : (Vector2)transform.position;
+    }
+
+    public void SetInteractionHighlighted(bool highlighted)
+    {
         if (interactionPrompt != null)
         {
-            interactionPrompt.Hide();
+            if (highlighted) interactionPrompt.Show();
+            else interactionPrompt.Hide();
         }
+        else if (interactionText != null)
+        {
+            interactionText.SetActive(highlighted);
+        }
+    }
+
+    private void RegisterMemoryData()
+    {
+        MemoryArchive.Register(MemoryKey, GetTitle(), GetDescription(), GetCutsceneText(), GetImage());
+    }
+
+    private string GetTitle()
+    {
+        return memory != null && !string.IsNullOrWhiteSpace(memory.memoryTitle)
+            ? memory.memoryTitle
+            : fallbackTitle;
+    }
+
+    private string GetDescription()
+    {
+        return memory != null && !string.IsNullOrWhiteSpace(memory.memoryDescription)
+            ? memory.memoryDescription
+            : fallbackDescription;
+    }
+
+    private string GetCutsceneText()
+    {
+        return memory != null && !string.IsNullOrWhiteSpace(memory.cutsceneText)
+            ? memory.cutsceneText
+            : fallbackCutsceneText;
+    }
+
+    private Sprite GetImage()
+    {
+        if (memory != null && memory.memoryImage != null)
+        {
+            return memory.memoryImage;
+        }
+
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        return spriteRenderer != null ? spriteRenderer.sprite : null;
     }
 }

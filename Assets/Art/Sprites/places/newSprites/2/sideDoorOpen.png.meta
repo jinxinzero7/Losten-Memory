@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 2a532fc45fb8bc6479c50e9420b44cfb
+guid: fa1d5a66982a2c44f91a9153c72b3cd9
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3035804514311879778
-    second: sideDoor_0
+      213: -9002327162334087274
+    second: IMG_2841__2_-removebg-preview_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: sideDoor_0
+      name: IMG_2841__2_-removebg-preview_0
       rect:
         serializedVersion: 2
-        x: 37
-        y: 27
-        width: 206
-        height: 700
+        x: 39
+        y: 29
+        width: 204
+        height: 694
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e93c9ece0e7aed5d0800000000000000
-      internalID: -3035804514311879778
+      spriteID: 697f939642f411380800000000000000
+      internalID: -9002327162334087274
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      sideDoor_0: -3035804514311879778
+      IMG_2841__2_-removebg-preview_0: -9002327162334087274
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

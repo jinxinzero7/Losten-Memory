@@ -28,6 +28,7 @@ public static class DemoSceneBootstrap
         if (sceneName == "GameScene2")
         {
             EnsureFinalDoor();
+            ConfigureNpcAnimation();
         }
 
         if (sceneName == "GameScene4")
@@ -51,6 +52,33 @@ public static class DemoSceneBootstrap
         }
     }
 
+    private static void ConfigureNpcAnimation()
+    {
+        ChoiceDialogue dialogue = Object.FindAnyObjectByType<ChoiceDialogue>();
+        if (dialogue == null) return;
+
+        SpriteRenderer renderer = dialogue.GetComponent<SpriteRenderer>();
+        if (renderer == null) return;
+
+        SimpleSpriteAnimation animation = dialogue.GetComponent<SimpleSpriteAnimation>();
+        if (animation == null)
+        {
+            animation = dialogue.gameObject.AddComponent<SimpleSpriteAnimation>();
+        }
+
+        animation.frameDuration = 0.32f;
+        animation.spritePaths = new[]
+        {
+            "Assets/Art/Sprites/places/newSprites/2/npc/IMG_2821.PNG",
+            "Assets/Art/Sprites/places/newSprites/2/npc/IMG_2822.PNG",
+            "Assets/Art/Sprites/places/newSprites/2/npc/IMG_2823.PNG",
+            "Assets/Art/Sprites/places/newSprites/2/npc/IMG_2824.PNG",
+            "Assets/Art/Sprites/places/newSprites/2/npc/IMG_2825.PNG",
+            "Assets/Art/Sprites/places/newSprites/2/npc/IMG_2826.PNG",
+            "Assets/Art/Sprites/places/newSprites/2/npc/IMG_2827.PNG"
+        };
+    }
+
     private static void SetupMemoryScene()
     {
         DisableIfExists("BoxForPuzzle");
@@ -58,26 +86,70 @@ public static class DemoSceneBootstrap
         DisableIfExists("DoorBack");
 
         ExtendPlayerBounds();
-        EnsureMemoryFragment();
+        ConfigureExistingMemoryFragment();
+        ConfigureExistingFeedPickup();
+        EnsureMazeVignette();
     }
 
-    private static void EnsureMemoryFragment()
+    private static void ConfigureExistingMemoryFragment()
     {
-        if (GameObject.Find("MemoryFragment") != null) return;
+        GameObject fragment = GameObject.Find("photo_0");
+        if (fragment == null) return;
 
-        GameObject fragment = new GameObject("MemoryFragment");
-        fragment.transform.position = new Vector3(4.8f, -2.35f, 0f);
-        fragment.transform.localScale = Vector3.one * 0.75f;
+        SpriteRenderer renderer = fragment.GetComponent<SpriteRenderer>();
+        if (renderer == null)
+        {
+            renderer = fragment.AddComponent<SpriteRenderer>();
+        }
+        if (renderer.sprite == null)
+        {
+            renderer.sprite = RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/places/newSprites/3/photo.PNG", 100f);
+        }
+        renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, 6);
 
-        SpriteRenderer renderer = fragment.AddComponent<SpriteRenderer>();
-        renderer.sprite = CreateDiamondSprite();
-        renderer.sortingOrder = 6;
-
-        CircleCollider2D collider = fragment.AddComponent<CircleCollider2D>();
+        Collider2D collider = fragment.GetComponent<Collider2D>();
+        if (collider == null)
+        {
+            CircleCollider2D circle = fragment.AddComponent<CircleCollider2D>();
+            circle.radius = 0.8f;
+            collider = circle;
+        }
         collider.isTrigger = true;
-        collider.radius = 0.8f;
 
-        fragment.AddComponent<MemoryFragmentPickup>();
+        MemoryFragmentPickup pickup = fragment.GetComponent<MemoryFragmentPickup>();
+        if (pickup == null)
+        {
+            pickup = fragment.AddComponent<MemoryFragmentPickup>();
+        }
+
+        pickup.fallbackMemoryKey = "maze_memory_01";
+        pickup.fallbackTitle = "Воспоминание из лабиринта";
+        pickup.fallbackDescription = "Пример описания фотокарточки, найденной в лабиринте.";
+        pickup.fallbackCutsceneText = "Пример внутреннего монолога после лабиринта.";
+    }
+
+    private static void ConfigureExistingFeedPickup()
+    {
+        GameObject feed = GameObject.Find("feed_0");
+        if (feed == null) return;
+
+        Collider2D collider = feed.GetComponent<Collider2D>();
+        if (collider == null)
+        {
+            CircleCollider2D circle = feed.AddComponent<CircleCollider2D>();
+            circle.radius = 0.8f;
+            collider = circle;
+        }
+        collider.isTrigger = true;
+
+        InventoryItemPickup pickup = feed.GetComponent<InventoryItemPickup>();
+        if (pickup == null)
+        {
+            pickup = feed.AddComponent<InventoryItemPickup>();
+        }
+
+        pickup.itemId = "DogFood";
+        pickup.promptText = "E - взять корм";
     }
 
     private static void DisableIfExists(string objectName)
@@ -94,10 +166,60 @@ public static class DemoSceneBootstrap
         PlayerController player = Object.FindAnyObjectByType<PlayerController>();
         if (player == null) return;
 
-        player.minX = -11.5f;
-        player.maxX = 11.5f;
-        player.minY = -3.4f;
-        player.maxY = -1.2f;
+        player.minX = -7.7f;
+        player.maxX = 7.7f;
+        player.minY = -5.1f;
+        player.maxY = 5.1f;
+    }
+
+    private static void EnsureMazeVignette()
+    {
+        if (GameObject.Find("MazeVignetteCanvas") != null) return;
+
+        GameObject canvasObject = new GameObject("MazeVignetteCanvas");
+        Canvas canvas = canvasObject.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 80;
+
+        CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        GameObject overlayObject = new GameObject("Vignette");
+        overlayObject.transform.SetParent(canvasObject.transform, false);
+        Image overlay = overlayObject.AddComponent<Image>();
+        overlay.sprite = CreateVignetteSprite();
+        overlay.color = Color.white;
+        overlay.raycastTarget = false;
+        Stretch(overlay.rectTransform);
+    }
+
+    private static void Stretch(RectTransform rect)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+    }
+
+    private static Sprite CreateVignetteSprite()
+    {
+        const int size = 256;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float distance = Vector2.Distance(new Vector2(x, y), center) / (size * 0.5f);
+                float alpha = Mathf.SmoothStep(0f, 0.78f, Mathf.InverseLerp(0.38f, 0.78f, distance));
+                texture.SetPixel(x, y, new Color(0f, 0f, 0f, alpha));
+            }
+        }
+
+        texture.Apply();
+        return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f);
     }
 
     private static void CreateWorldLabel(string objectName, string text, Vector3 position)

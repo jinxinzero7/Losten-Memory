@@ -24,6 +24,10 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         sr = GetComponent<SpriteRenderer>();
+        if (GetComponent<PlayerInteractionController>() == null)
+        {
+            gameObject.AddComponent<PlayerInteractionController>();
+        }
 
         if (isFirstSpawn && GameManager.Instance != null)
         {
@@ -58,9 +62,12 @@ public class PlayerController : MonoBehaviour
         bool isMoving = movement.x != 0 || movement.y != 0;
         animator.SetFloat("Speed", isMoving ? 1f : 0f);
 
-        float direction = 0;
-        if (movement.x > 0) direction = 1;
-        else if (movement.x < 0) direction = -1;
+        if (sr != null && Mathf.Abs(movement.x) > 0.01f)
+        {
+            sr.flipX = movement.x < 0f;
+        }
+
+        float direction = movement.x < -0.01f ? -1f : 1f;
         animator.SetFloat("Direction", direction);
     }
 

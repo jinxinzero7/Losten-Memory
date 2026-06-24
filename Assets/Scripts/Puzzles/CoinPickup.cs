@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CoinPickup : MonoBehaviour
+public class CoinPickup : MonoBehaviour, IWorldInteractable
 {
     public int coinValue = 1;
     public string coinID;
@@ -8,9 +8,16 @@ public class CoinPickup : MonoBehaviour
 
     private bool playerNear;
     private ThoughtPrompt interactionPrompt;
+    private PlayerInteractionController interactionController;
+    private Collider2D interactionCollider;
+
+    public Transform InteractionTransform => transform;
+    public int InteractionPriority => 100;
+    public bool CanInteract => playerNear;
 
     void Start()
     {
+        interactionCollider = GetComponent<Collider2D>();
         if (DemoQuest.IsCoinCollected(coinID))
         {
             Destroy(gameObject);
@@ -21,14 +28,13 @@ public class CoinPickup : MonoBehaviour
         interactionPrompt = ThoughtPrompt.Ensure(interactionText);
     }
 
-    void Update()
+    public void Interact()
     {
-        if (playerNear && GameInput.InteractPressed)
-        {
-            Inventory.AddCoins(coinValue);
-            DemoQuest.MarkCoinCollected(coinID);
-            Destroy(gameObject);
-        }
+        if (!CanInteract) return;
+
+        Inventory.AddCoins(coinValue);
+        DemoQuest.MarkCoinCollected(coinID);
+        Destroy(gameObject);
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -36,13 +42,10 @@ public class CoinPickup : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = true;
-        if (interactionPrompt != null)
+        interactionController = other.GetComponent<PlayerInteractionController>();
+        if (interactionController != null)
         {
-            interactionPrompt.Show();
-        }
-        else if (interactionText != null)
-        {
-            interactionText.SetActive(true);
+            interactionController.Register(this);
         }
     }
 
@@ -51,13 +54,31 @@ public class CoinPickup : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         playerNear = false;
+        interactionController?.Unregister(this);
+        interactionController = null;
+    }
+
+    private void OnDisable()
+    {
+        interactionController?.Unregister(this);
+        SetInteractionHighlighted(false);
+    }
+
+    public Vector2 GetInteractionPoint(Vector2 playerPosition)
+    {
+        return interactionCollider != null ? interactionCollider.ClosestPoint(playerPosition) : (Vector2)transform.position;
+    }
+
+    public void SetInteractionHighlighted(bool highlighted)
+    {
         if (interactionPrompt != null)
         {
-            interactionPrompt.Hide();
+            if (highlighted) interactionPrompt.Show();
+            else interactionPrompt.Hide();
         }
         else if (interactionText != null)
         {
-            interactionText.SetActive(false);
+            interactionText.SetActive(highlighted);
         }
     }
 }

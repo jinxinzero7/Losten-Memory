@@ -1,9 +1,10 @@
 using UnityEngine;
 
-public class KeyItem : MonoBehaviour, IWorldInteractable
+public class InventoryItemPickup : MonoBehaviour, IWorldInteractable
 {
+    public string itemId = "DogFood";
+    public string promptText = "E - взять";
     public GameObject interactionText;
-    public string keyID = "MainKey";
 
     private bool playerNear;
     private ThoughtPrompt interactionPrompt;
@@ -17,13 +18,13 @@ public class KeyItem : MonoBehaviour, IWorldInteractable
     private void Start()
     {
         interactionCollider = GetComponent<Collider2D>();
-        if (KeyInventory.IsKeyCollected(keyID))
+        if (Inventory.HasItem(itemId))
         {
             Destroy(gameObject);
             return;
         }
 
-        interactionText = ThoughtPrompt.EnsurePrompt(interactionText, "KeyPrompt", "E - взять ключ", transform, new Vector3(0f, 1.1f, 0f), 340f);
+        interactionText = ThoughtPrompt.EnsurePrompt(interactionText, gameObject.name + "Prompt", promptText, transform, new Vector3(0f, 1.0f, 0f), 300f);
         interactionPrompt = ThoughtPrompt.Ensure(interactionText);
     }
 
@@ -31,14 +32,7 @@ public class KeyItem : MonoBehaviour, IWorldInteractable
     {
         if (!CanInteract) return;
 
-        if (Inventory.Instance == null)
-        {
-            Debug.LogError("Inventory не найден на сцене.");
-            return;
-        }
-
-        Inventory.AddItem("Key");
-        KeyInventory.MarkKeyCollected(keyID);
+        Inventory.AddItem(itemId);
         Destroy(gameObject);
     }
 
