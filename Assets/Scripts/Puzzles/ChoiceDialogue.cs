@@ -186,8 +186,10 @@ public class ChoiceDialogue : MonoBehaviour, IWorldInteractable
             SetNpcText("Ты принесла три монеты. Сделка есть сделка: отдавай их, и проход откроется.");
             AddQuestChoice("Отдать 3 монеты", () =>
             {
-                if (Inventory.SpendCoins(3) || DemoQuest.CollectedCoinCount >= 3)
+                bool hasEnoughCoins = Inventory.GetCoins() >= 3 || DemoQuest.CollectedCoinCount >= 3;
+                if (hasEnoughCoins)
                 {
+                    Inventory.ClearCoins();
                     DemoQuest.HandInCoins();
                     DemoSceneBootstrap.EnsureFinalDoor();
                 }

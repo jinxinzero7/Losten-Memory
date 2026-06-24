@@ -31,6 +31,8 @@ public class CoinPickup : MonoBehaviour, IWorldInteractable
     {
         if (!CanInteract) return;
 
+        interactionController?.Unregister(this);
+        DestroyInteractionPrompt();
         Inventory.AddCoins(coinValue);
         DemoQuest.MarkCoinCollected(coinID);
         Destroy(gameObject);
@@ -76,6 +78,16 @@ public class CoinPickup : MonoBehaviour, IWorldInteractable
         else if (interactionText != null)
         {
             interactionText.SetActive(highlighted);
+        }
+    }
+
+    private void DestroyInteractionPrompt()
+    {
+        if (interactionText != null)
+        {
+            Destroy(interactionText);
+            interactionText = null;
+            interactionPrompt = null;
         }
     }
 }

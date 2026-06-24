@@ -22,6 +22,11 @@ public static class DemoSceneBootstrap
     {
         string sceneName = SceneManager.GetActiveScene().name;
 
+        if (sceneName != "MainMenu")
+        {
+            Inventory.RefreshUI();
+        }
+
         CoinRoomController.EnsureSceneCoin();
         QuestCoinCounter.EnsureCreated();
 
@@ -91,6 +96,7 @@ public static class DemoSceneBootstrap
         DisableIfExists("DoorBack");
 
         ExtendPlayerBounds();
+        ConfigureMazeExit();
         ConfigureExistingMemoryFragment();
         ConfigureExistingFeedPickup();
         EnsureMazeVignette();
@@ -273,6 +279,28 @@ public static class DemoSceneBootstrap
         player.maxX = 12f;
         player.minY = -6.8f;
         player.maxY = 5.7f;
+    }
+
+    private static void ConfigureMazeExit()
+    {
+        GameObject exitDoor = GameObject.Find("DoorBack (1)");
+        if (exitDoor == null) return;
+
+        Collider2D collider = exitDoor.GetComponent<Collider2D>();
+        if (collider == null)
+        {
+            BoxCollider2D box = exitDoor.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(1.8f, 2.2f);
+            collider = box;
+        }
+
+        collider.isTrigger = true;
+
+        BoxCollider2D boxCollider = collider as BoxCollider2D;
+        if (boxCollider != null)
+        {
+            boxCollider.size = new Vector2(Mathf.Max(boxCollider.size.x, 1.8f), Mathf.Max(boxCollider.size.y, 2.2f));
+        }
     }
 
     private static void EnsureMazeVignette()

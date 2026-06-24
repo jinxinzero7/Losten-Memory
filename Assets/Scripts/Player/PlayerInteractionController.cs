@@ -3,19 +3,26 @@ using UnityEngine;
 
 public class PlayerInteractionController : MonoBehaviour
 {
-    public float horizontalRadius = 1.25f;
-    public float verticalRadius = 2.15f;
+    public float horizontalRadius = 1.75f;
+    public float verticalRadius = 2.75f;
+    public float refreshInterval = 0.05f;
 
     private readonly List<IWorldInteractable> candidates = new List<IWorldInteractable>();
     private IWorldInteractable activeInteractable;
     private float nextRefreshTime;
+
+    private void OnEnable()
+    {
+        RefreshCandidates();
+        nextRefreshTime = 0f;
+    }
 
     private void Update()
     {
         if (Time.time >= nextRefreshTime)
         {
             RefreshCandidates();
-            nextRefreshTime = Time.time + 0.2f;
+            nextRefreshTime = Time.time + refreshInterval;
         }
 
         IWorldInteractable nextActive = FindBestInteractable();

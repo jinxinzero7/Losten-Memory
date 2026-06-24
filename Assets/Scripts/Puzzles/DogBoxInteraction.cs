@@ -126,7 +126,10 @@ public class DogBoxInteraction : MonoBehaviour, IWorldInteractable
         if (GameObject.Find("DogMemoryFragment") != null) return;
 
         GameObject fragment = new GameObject("DogMemoryFragment");
-        fragment.transform.position = transform.position + new Vector3(0.85f, -0.25f, 0f);
+        Vector3 spawnPosition = player != null
+            ? player.transform.position + new Vector3(0.75f, 0f, 0f)
+            : transform.position + new Vector3(0.85f, -0.25f, 0f);
+        fragment.transform.position = spawnPosition;
         fragment.transform.localScale = Vector3.one * 0.42f;
 
         SpriteRenderer renderer = fragment.AddComponent<SpriteRenderer>();
@@ -142,6 +145,7 @@ public class DogBoxInteraction : MonoBehaviour, IWorldInteractable
         pickup.fallbackTitle = memoryTitle;
         pickup.fallbackDescription = memoryDescription;
         pickup.fallbackCutsceneText = memoryCutsceneText;
+        interactionController?.Register(pickup);
     }
 
     private void OnTriggerEnter2D(Collider2D other)

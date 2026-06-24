@@ -195,37 +195,32 @@ public class ThoughtPrompt : MonoBehaviour
 
     private static GameObject CreatePromptObject(string objectName)
     {
-        Canvas canvas = null;
-        foreach (Canvas candidate in FindObjectsByType<Canvas>(FindObjectsInactive.Exclude))
-        {
-            if (candidate.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                canvas = candidate;
-                break;
-            }
-        }
-
-        if (canvas == null)
-        {
-            canvas = FindAnyObjectByType<Canvas>(FindObjectsInactive.Exclude);
-        }
-
-        if (canvas == null)
-        {
-            GameObject canvasObject = new GameObject("RuntimePromptCanvas");
-            canvas = canvasObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 140;
-            CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            canvasObject.AddComponent<GraphicRaycaster>();
-        }
+        Canvas canvas = GetOrCreatePromptCanvas();
 
         GameObject promptObject = new GameObject(string.IsNullOrWhiteSpace(objectName) ? "InteractionPrompt" : objectName);
         promptObject.transform.SetParent(canvas.transform, false);
         promptObject.AddComponent<RectTransform>();
         promptObject.AddComponent<TextMeshProUGUI>();
         return promptObject;
+    }
+
+    private static Canvas GetOrCreatePromptCanvas()
+    {
+        GameObject existing = GameObject.Find("RuntimePromptCanvas");
+        if (existing != null)
+        {
+            Canvas existingCanvas = existing.GetComponent<Canvas>();
+            if (existingCanvas != null) return existingCanvas;
+        }
+
+        GameObject canvasObject = new GameObject("RuntimePromptCanvas");
+        Canvas canvas = canvasObject.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 180;
+        CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        canvasObject.AddComponent<GraphicRaycaster>();
+        return canvas;
     }
 }

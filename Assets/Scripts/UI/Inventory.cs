@@ -30,6 +30,12 @@ public class Inventory : MonoBehaviour
     private Canvas runtimeCanvas;
     private const float SlotSize = 120f;
     private const float IconSize = 58f;
+    private static readonly HashSet<string> SceneInventoryPanelNames = new HashSet<string>
+    {
+        "InventoryPanel",
+        "InventoryPanell",
+        "MemoriesPanel"
+    };
 
     void Awake()
     {
@@ -55,23 +61,25 @@ public class Inventory : MonoBehaviour
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         FindUIPanels();
-        UpdateInventoryUI();
+        SetHudVisible(IsGameplayScene(scene.name));
+        HideSceneInventoryPanels();
+        if (IsGameplayScene(scene.name))
+        {
+            UpdateInventoryUI();
+        }
     }
 
     void Start()
     {
         FindUIPanels();
+        SetHudVisible(IsGameplayScene(SceneManager.GetActiveScene().name));
+        HideSceneInventoryPanels();
         UpdateInventoryUI();
     }
 
     void FindUIPanels()
     {
-        inventoryPanel = FindPanel(inventoryPanelName);
-        if (inventoryPanel == null)
-        {
-            inventoryPanel = CreateRuntimePanel(inventoryPanelName, new Vector2(24f, -24f));
-        }
-
+        inventoryPanel = GetOrCreateRuntimePanel(inventoryPanelName, new Vector2(24f, -24f));
         memoriesPanel = inventoryPanel;
         ConfigurePanelLayout(inventoryPanel);
 
@@ -81,30 +89,19 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    Transform FindPanel(string panelName)
-    {
-        if (string.IsNullOrWhiteSpace(panelName)) return null;
-
-        Canvas[] canvases = FindObjectsByType<Canvas>();
-        foreach (Canvas canvas in canvases)
-        {
-            foreach (Transform child in canvas.GetComponentsInChildren<Transform>(true))
-            {
-                if (child.name == panelName)
-                {
-                    return child;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    Transform CreateRuntimePanel(string panelName, Vector2 anchoredPosition)
+    Transform GetOrCreateRuntimePanel(string panelName, Vector2 anchoredPosition)
     {
         Canvas canvas = GetOrCreateRuntimeCanvas();
+        string objectName = string.IsNullOrWhiteSpace(panelName) ? "InventoryPanel" : panelName;
 
-        GameObject panelObject = new GameObject(string.IsNullOrWhiteSpace(panelName) ? "InventoryPanel" : panelName);
+        Transform existing = canvas.transform.Find(objectName);
+        if (existing != null)
+        {
+            existing.gameObject.SetActive(true);
+            return existing;
+        }
+
+        GameObject panelObject = new GameObject(objectName);
         panelObject.transform.SetParent(canvas.transform, false);
 
         RectTransform rect = panelObject.AddComponent<RectTransform>();
@@ -149,6 +146,32 @@ public class Inventory : MonoBehaviour
         return runtimeCanvas;
     }
 
+    private static bool IsGameplayScene(string sceneName)
+    {
+        return !string.IsNullOrWhiteSpace(sceneName) && sceneName != "MainMenu";
+    }
+
+    private void SetHudVisible(bool visible)
+    {
+        Canvas canvas = GetOrCreateRuntimeCanvas();
+        canvas.gameObject.SetActive(visible);
+    }
+
+    private void HideSceneInventoryPanels()
+    {
+        Canvas ownCanvas = GetOrCreateRuntimeCanvas();
+        foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include))
+        {
+            foreach (Transform child in canvas.GetComponentsInChildren<Transform>(true))
+            {
+                if (!SceneInventoryPanelNames.Contains(child.name)) continue;
+                if (child == inventoryPanel || child.IsChildOf(ownCanvas.transform)) continue;
+
+                child.gameObject.SetActive(false);
+            }
+        }
+    }
+
     // ========== ПРЕДМЕТЫ ==========
     public static void AddItem(string itemName)
     {
@@ -158,6 +181,8 @@ public class Inventory : MonoBehaviour
             Debug.LogError("Inventory.Instance = NULL!");
             return;
         }
+
+        if (string.IsNullOrWhiteSpace(itemName)) return;
 
         if (!Instance.items.Contains(itemName))
         {
@@ -207,11 +232,23 @@ public class Inventory : MonoBehaviour
         return true;
     }
 
+    public static void ClearCoins()
+    {
+        EnsureInstance();
+        if (Instance == null) return;
+        if (Instance.coins == 0) return;
+
+        Instance.coins = 0;
+        Instance.UpdateInventoryUI();
+        SaveGameService.RequestAutosave();
+    }
+
     // ========== ВОСПОМИНАНИЯ ==========
     public static void AddMemory(string memoryName)
     {
         EnsureInstance();
         if (Instance == null) return;
+        if (string.IsNullOrWhiteSpace(memoryName)) return;
 
         if (!Instance.memories.Contains(memoryName))
         {
@@ -252,13 +289,44 @@ public class Inventory : MonoBehaviour
         EnsureInstance();
 
         Instance.items.Clear();
-        if (restoredItems != null) Instance.items.AddRange(restoredItems);
+        if (restoredItems != null)
+        {
+            foreach (string item in restoredItems)
+            {
+                if (!string.IsNullOrWhiteSpace(item) && !Instance.items.Contains(item))
+                {
+                    Instance.items.Add(item);
+                }
+            }
+        }
 
         Instance.memories.Clear();
-        if (restoredMemories != null) Instance.memories.AddRange(restoredMemories);
+        if (restoredMemories != null)
+        {
+            foreach (string memory in restoredMemories)
+            {
+                if (!string.IsNullOrWhiteSpace(memory) && !Instance.memories.Contains(memory))
+                {
+                    Instance.memories.Add(memory);
+                }
+            }
+        }
 
         Instance.coins = Mathf.Max(0, restoredCoins);
         Instance.FindUIPanels();
+        Instance.SetHudVisible(IsGameplayScene(SceneManager.GetActiveScene().name));
+        Instance.HideSceneInventoryPanels();
+        Instance.UpdateInventoryUI();
+    }
+
+    public static void RefreshUI()
+    {
+        EnsureInstance();
+        if (Instance == null) return;
+
+        Instance.FindUIPanels();
+        Instance.SetHudVisible(IsGameplayScene(SceneManager.GetActiveScene().name));
+        Instance.HideSceneInventoryPanels();
         Instance.UpdateInventoryUI();
     }
 
@@ -290,13 +358,20 @@ public class Inventory : MonoBehaviour
     // ========== UI ==========
     void UpdateInventoryUI()
     {
+        if (inventoryPanel == null)
+        {
+            FindUIPanels();
+        }
         if (inventoryPanel == null) return;
 
         foreach (Transform child in inventoryPanel)
             Destroy(child.gameObject);
 
+        HashSet<string> renderedItems = new HashSet<string>();
         foreach (string item in items)
         {
+            if (string.IsNullOrWhiteSpace(item) || !renderedItems.Add(item)) continue;
+
             Sprite iconSprite = GetItemIcon(item);
             CreateSlot(inventoryPanel, iconSprite, string.Empty);
         }
@@ -306,8 +381,11 @@ public class Inventory : MonoBehaviour
             CreateSlot(inventoryPanel, GetCoinIcon(), coins.ToString());
         }
 
+        HashSet<string> renderedMemories = new HashSet<string>();
         foreach (string memory in memories)
         {
+            if (string.IsNullOrWhiteSpace(memory) || !renderedMemories.Add(memory)) continue;
+
             string memoryTitle = memory;
             Sprite memorySprite = MemoryArchive.GetPhotoByTitle(memoryTitle) ?? GetMemoryIcon();
             CreateSlot(inventoryPanel, memorySprite, string.Empty, () => MemoryArchive.ShowByTitle(memoryTitle));
