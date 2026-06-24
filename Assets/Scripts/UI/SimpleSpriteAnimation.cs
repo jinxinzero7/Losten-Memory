@@ -32,10 +32,20 @@ public class SimpleSpriteAnimation : MonoBehaviour
     {
         if (spritePaths == null || spritePaths.Length == 0) return;
 
-        frames = new Sprite[spritePaths.Length];
+        System.Collections.Generic.List<Sprite> loadedFrames = new System.Collections.Generic.List<Sprite>();
         for (int i = 0; i < spritePaths.Length; i++)
         {
-            frames[i] = RuntimeSpriteLoader.LoadProjectSprite(spritePaths[i], 100f);
+            Sprite frame = RuntimeSpriteLoader.LoadProjectSprite(spritePaths[i], 100f);
+            if (frame != null)
+            {
+                loadedFrames.Add(frame);
+            }
+        }
+
+        frames = loadedFrames.ToArray();
+        if (spriteRenderer != null && frames.Length > 0)
+        {
+            spriteRenderer.sprite = frames[0];
         }
     }
 }

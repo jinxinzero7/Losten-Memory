@@ -57,6 +57,12 @@ public static class RuntimeSpriteLoader
             return projectPath;
         }
 
+        string streamingAssetsPath = Path.Combine(Application.streamingAssetsPath, normalizedPath);
+        if (File.Exists(streamingAssetsPath))
+        {
+            return streamingAssetsPath;
+        }
+
         string siblingAssetsPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", normalizedPath));
         return File.Exists(siblingAssetsPath) ? siblingAssetsPath : null;
     }
