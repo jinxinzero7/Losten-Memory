@@ -67,6 +67,16 @@ public class Inventory : MonoBehaviour
     {
         inventoryPanel = FindPanel(inventoryPanelName);
         memoriesPanel = FindPanel(memoriesPanelName);
+        if (inventoryPanel == null)
+        {
+            inventoryPanel = CreateRuntimePanel(inventoryPanelName, new Vector2(24f, -24f));
+        }
+
+        if (memoriesPanel == null)
+        {
+            memoriesPanel = CreateRuntimePanel(memoriesPanelName, new Vector2(24f, -164f));
+        }
+
         ConfigurePanelLayout(inventoryPanel);
         ConfigurePanelLayout(memoriesPanel);
 
@@ -98,6 +108,52 @@ public class Inventory : MonoBehaviour
         }
 
         return null;
+    }
+
+    Transform CreateRuntimePanel(string panelName, Vector2 anchoredPosition)
+    {
+        Canvas canvas = null;
+        foreach (Canvas candidate in FindObjectsByType<Canvas>(FindObjectsInactive.Exclude))
+        {
+            if (candidate.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                canvas = candidate;
+                break;
+            }
+        }
+
+        if (canvas == null)
+        {
+            GameObject canvasObject = new GameObject("RuntimeInventoryCanvas");
+            canvas = canvasObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 90;
+
+            CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            canvasObject.AddComponent<GraphicRaycaster>();
+        }
+
+        GameObject panelObject = new GameObject(string.IsNullOrWhiteSpace(panelName) ? "InventoryPanel" : panelName);
+        panelObject.transform.SetParent(canvas.transform, false);
+
+        RectTransform rect = panelObject.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = new Vector2(SlotSize * 3f + 24f, SlotSize);
+
+        GridLayoutGroup grid = panelObject.AddComponent<GridLayoutGroup>();
+        grid.cellSize = new Vector2(SlotSize, SlotSize);
+        grid.spacing = new Vector2(12f, 12f);
+        grid.constraint = GridLayoutGroup.Constraint.FixedRowCount;
+        grid.constraintCount = 1;
+
+        Image image = panelObject.AddComponent<Image>();
+        image.color = new Color(1f, 1f, 1f, 0f);
+        return panelObject.transform;
     }
 
     // ========== ПРЕДМЕТЫ ==========
@@ -266,7 +322,8 @@ public class Inventory : MonoBehaviour
             foreach (string memory in memories)
             {
                 string memoryTitle = memory;
-                CreateSlot(memoriesPanel, GetMemoryIcon(), string.Empty, () => MemoryArchive.ShowByTitle(memoryTitle));
+                Sprite memorySprite = MemoryArchive.GetPhotoByTitle(memoryTitle) ?? GetMemoryIcon();
+                CreateSlot(memoriesPanel, memorySprite, string.Empty, () => MemoryArchive.ShowByTitle(memoryTitle));
             }
         }
     }

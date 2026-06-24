@@ -35,6 +35,11 @@ public static class DemoSceneBootstrap
         {
             SetupMemoryScene();
         }
+
+        if (sceneName == "GameScene5")
+        {
+            SetupDogScene();
+        }
     }
 
     public static void EnsureFinalDoor()
@@ -89,6 +94,100 @@ public static class DemoSceneBootstrap
         ConfigureExistingMemoryFragment();
         ConfigureExistingFeedPickup();
         EnsureMazeVignette();
+    }
+
+    private static void SetupDogScene()
+    {
+        GameObject dogBox = GameObject.Find("dogBox") ?? GameObject.Find("dogbox");
+        if (dogBox != null)
+        {
+            SpriteRenderer renderer = dogBox.GetComponent<SpriteRenderer>();
+            if (renderer != null && renderer.sprite == null)
+            {
+                renderer.sprite = RuntimeSpriteLoader.LoadProjectSprite("Assets/Art/Sprites/places/newSprites/3/box.PNG", 100f);
+            }
+
+            Collider2D collider = dogBox.GetComponent<Collider2D>();
+            if (collider == null)
+            {
+                BoxCollider2D box = dogBox.AddComponent<BoxCollider2D>();
+                box.size = new Vector2(1.4f, 1.2f);
+                collider = box;
+            }
+            collider.isTrigger = true;
+
+            if (dogBox.GetComponent<DogBoxInteraction>() == null)
+            {
+                dogBox.AddComponent<DogBoxInteraction>();
+            }
+        }
+
+        GameObject portal = GameObject.Find("portal");
+        if (portal != null)
+        {
+            SpriteRenderer renderer = portal.GetComponent<SpriteRenderer>();
+            if (renderer != null && renderer.sprite == null)
+            {
+                renderer.sprite = CreatePortalSprite();
+            }
+
+            Collider2D collider = portal.GetComponent<Collider2D>();
+            if (collider == null)
+            {
+                BoxCollider2D box = portal.AddComponent<BoxCollider2D>();
+                box.size = new Vector2(1.2f, 1.8f);
+                collider = box;
+            }
+            collider.isTrigger = true;
+
+            if (portal.GetComponent<EndingPortal>() == null)
+            {
+                portal.AddComponent<EndingPortal>();
+            }
+        }
+
+        DogSceneController controller = Object.FindAnyObjectByType<DogSceneController>();
+        if (controller == null)
+        {
+            GameObject controllerObject = new GameObject("DogSceneController");
+            controller = controllerObject.AddComponent<DogSceneController>();
+        }
+
+        controller.portal = portal;
+        if (portal != null)
+        {
+            portal.SetActive(DemoQuest.IsMemoryUnlocked("dog_memory"));
+        }
+    }
+
+    private static Sprite CreatePortalSprite()
+    {
+        const int width = 80;
+        const int height = 120;
+        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Vector2 center = new Vector2((width - 1) * 0.5f, (height - 1) * 0.5f);
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float dx = (x - center.x) / (width * 0.48f);
+                float dy = (y - center.y) / (height * 0.48f);
+                float distance = Mathf.Sqrt(dx * dx + dy * dy);
+                if (distance > 1f)
+                {
+                    texture.SetPixel(x, y, new Color(0f, 0f, 0f, 0f));
+                    continue;
+                }
+
+                float edge = Mathf.SmoothStep(0.72f, 1f, distance);
+                Color color = Color.Lerp(new Color(0.18f, 0.45f, 0.95f, 0.65f), new Color(0.78f, 0.92f, 1f, 1f), edge);
+                texture.SetPixel(x, y, color);
+            }
+        }
+
+        texture.Apply();
+        return Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 64f);
     }
 
     private static void ConfigureExistingMemoryFragment()

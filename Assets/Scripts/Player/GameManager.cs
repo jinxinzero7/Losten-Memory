@@ -63,6 +63,7 @@ public class GameManager : MonoBehaviour
                 if (!hasSpawned)
                 {
                     player.transform.position = GetSpawnPosition();
+                    ApplyScenePlayerSettings(player, sceneName);
                     hasSpawned = true;
                 }
 
@@ -80,6 +81,11 @@ public class GameManager : MonoBehaviour
     Vector3 GetSpawnPosition()
     {
         string currentScene = SceneManager.GetActiveScene().name;
+
+        if (currentScene == "GameScene4")
+        {
+            return new Vector3(-1.25f, -5.75f, 0.05f);
+        }
 
         // Используем твои реальные имена сцен
         if (isFirstLaunch && currentScene == "Game")  // ← Game вместо Location1
@@ -113,6 +119,16 @@ public class GameManager : MonoBehaviour
         }
 
         return Vector3.zero;
+    }
+
+    private void ApplyScenePlayerSettings(GameObject player, string sceneName)
+    {
+        if (player == null) return;
+
+        if (sceneName == "GameScene4")
+        {
+            player.transform.localScale = new Vector3(0.147609f, 0.105523f, 1f);
+        }
     }
 
     public void SetSpawnPoint(Vector3 position)

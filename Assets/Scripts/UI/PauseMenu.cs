@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -101,12 +102,40 @@ public class PauseMenu : MonoBehaviour
 
         foreach (Button button in pauseMenuUI.GetComponentsInChildren<Button>(true))
         {
+            RectTransform buttonRect = button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                buttonRect.sizeDelta = new Vector2(Mathf.Max(buttonRect.sizeDelta.x, 260f), Mathf.Max(buttonRect.sizeDelta.y, 74f));
+            }
+
             Image image = button.GetComponent<Image>();
             if (image != null && buttonSprite != null)
             {
                 image.sprite = buttonSprite;
                 image.color = Color.white;
                 image.type = Image.Type.Sliced;
+            }
+
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+            {
+                label.color = Color.black;
+                label.fontSize = Mathf.Max(label.fontSize, 24f);
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+        }
+
+        foreach (TMP_Text text in pauseMenuUI.GetComponentsInChildren<TMP_Text>(true))
+        {
+            text.color = Color.black;
+        }
+
+        if (panelObject != null)
+        {
+            RectTransform panelRect = panelObject.GetComponent<RectTransform>();
+            if (panelRect != null)
+            {
+                panelRect.sizeDelta = new Vector2(Mathf.Max(panelRect.sizeDelta.x, 620f), Mathf.Max(panelRect.sizeDelta.y, 720f));
             }
         }
 

@@ -44,6 +44,16 @@ public static class MemoryArchive
         MemoryPresentation.Show(title, "Описание воспоминания пока не задано.", "Текст воспоминания пока не задан.", null);
     }
 
+    public static Sprite GetPhotoByTitle(string title)
+    {
+        if (!string.IsNullOrWhiteSpace(title) && ByTitle.TryGetValue(title, out MemoryEntry entry))
+        {
+            return entry.Photo;
+        }
+
+        return null;
+    }
+
     public static void ShowByKey(string key)
     {
         if (!string.IsNullOrWhiteSpace(key) && ByKey.TryGetValue(key, out MemoryEntry entry))
