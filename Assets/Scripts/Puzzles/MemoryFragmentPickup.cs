@@ -54,12 +54,14 @@ public class MemoryFragmentPickup : MonoBehaviour, IWorldInteractable
         Sprite image = GetImage();
 
         collected = true;
+        interactionController?.Unregister(this);
         SetInteractionHighlighted(false);
 
         MemoryArchive.Register(MemoryKey, title, description, cutsceneText, image);
         DemoQuest.UnlockMemory(MemoryKey, title);
         Inventory.AddMemory(title);
         MemoryPresentation.Show(title, description, cutsceneText, image);
+        DestroyInteractionPrompt();
         gameObject.SetActive(false);
     }
 
@@ -100,6 +102,16 @@ public class MemoryFragmentPickup : MonoBehaviour, IWorldInteractable
         else if (interactionText != null)
         {
             interactionText.SetActive(highlighted);
+        }
+    }
+
+    private void DestroyInteractionPrompt()
+    {
+        if (interactionText != null)
+        {
+            Destroy(interactionText);
+            interactionText = null;
+            interactionPrompt = null;
         }
     }
 

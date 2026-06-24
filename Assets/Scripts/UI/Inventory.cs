@@ -27,6 +27,7 @@ public class Inventory : MonoBehaviour
 
     private Transform inventoryPanel;
     private Transform memoriesPanel;
+    private Canvas runtimeCanvas;
     private const float SlotSize = 120f;
     private const float IconSize = 58f;
 
@@ -66,28 +67,17 @@ public class Inventory : MonoBehaviour
     void FindUIPanels()
     {
         inventoryPanel = FindPanel(inventoryPanelName);
-        memoriesPanel = FindPanel(memoriesPanelName);
         if (inventoryPanel == null)
         {
             inventoryPanel = CreateRuntimePanel(inventoryPanelName, new Vector2(24f, -24f));
         }
 
-        if (memoriesPanel == null)
-        {
-            memoriesPanel = CreateRuntimePanel(memoriesPanelName, new Vector2(24f, -164f));
-        }
-
+        memoriesPanel = inventoryPanel;
         ConfigurePanelLayout(inventoryPanel);
-        ConfigurePanelLayout(memoriesPanel);
 
         if (warnWhenPanelsMissing && inventoryPanel == null && !string.IsNullOrWhiteSpace(inventoryPanelName))
         {
             Debug.LogWarning("Панель не найдена: " + inventoryPanelName);
-        }
-
-        if (warnWhenPanelsMissing && memoriesPanel == null && !string.IsNullOrWhiteSpace(memoriesPanelName))
-        {
-            Debug.LogWarning("Панель не найдена: " + memoriesPanelName);
         }
     }
 
@@ -112,28 +102,7 @@ public class Inventory : MonoBehaviour
 
     Transform CreateRuntimePanel(string panelName, Vector2 anchoredPosition)
     {
-        Canvas canvas = null;
-        foreach (Canvas candidate in FindObjectsByType<Canvas>(FindObjectsInactive.Exclude))
-        {
-            if (candidate.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                canvas = candidate;
-                break;
-            }
-        }
-
-        if (canvas == null)
-        {
-            GameObject canvasObject = new GameObject("RuntimeInventoryCanvas");
-            canvas = canvasObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 90;
-
-            CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            canvasObject.AddComponent<GraphicRaycaster>();
-        }
+        Canvas canvas = GetOrCreateRuntimeCanvas();
 
         GameObject panelObject = new GameObject(string.IsNullOrWhiteSpace(panelName) ? "InventoryPanel" : panelName);
         panelObject.transform.SetParent(canvas.transform, false);
@@ -154,6 +123,30 @@ public class Inventory : MonoBehaviour
         Image image = panelObject.AddComponent<Image>();
         image.color = new Color(1f, 1f, 1f, 0f);
         return panelObject.transform;
+    }
+
+    Canvas GetOrCreateRuntimeCanvas()
+    {
+        if (runtimeCanvas != null) return runtimeCanvas;
+
+        Transform existing = transform.Find("RuntimeInventoryCanvas");
+        if (existing != null)
+        {
+            runtimeCanvas = existing.GetComponent<Canvas>();
+            if (runtimeCanvas != null) return runtimeCanvas;
+        }
+
+        GameObject canvasObject = new GameObject("RuntimeInventoryCanvas");
+        canvasObject.transform.SetParent(transform, false);
+        runtimeCanvas = canvasObject.AddComponent<Canvas>();
+        runtimeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        runtimeCanvas.sortingOrder = 210;
+
+        CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        canvasObject.AddComponent<GraphicRaycaster>();
+        return runtimeCanvas;
     }
 
     // ========== ПРЕДМЕТЫ ==========
@@ -297,34 +290,27 @@ public class Inventory : MonoBehaviour
     // ========== UI ==========
     void UpdateInventoryUI()
     {
-        if (inventoryPanel != null)
+        if (inventoryPanel == null) return;
+
+        foreach (Transform child in inventoryPanel)
+            Destroy(child.gameObject);
+
+        foreach (string item in items)
         {
-            foreach (Transform child in inventoryPanel)
-                Destroy(child.gameObject);
-
-            foreach (string item in items)
-            {
-                Sprite iconSprite = GetItemIcon(item);
-                CreateSlot(inventoryPanel, iconSprite, string.Empty);
-            }
-
-            if (coins > 0)
-            {
-                CreateSlot(inventoryPanel, GetCoinIcon(), coins.ToString());
-            }
+            Sprite iconSprite = GetItemIcon(item);
+            CreateSlot(inventoryPanel, iconSprite, string.Empty);
         }
 
-        if (memoriesPanel != null)
+        if (coins > 0)
         {
-            foreach (Transform child in memoriesPanel)
-                Destroy(child.gameObject);
+            CreateSlot(inventoryPanel, GetCoinIcon(), coins.ToString());
+        }
 
-            foreach (string memory in memories)
-            {
-                string memoryTitle = memory;
-                Sprite memorySprite = MemoryArchive.GetPhotoByTitle(memoryTitle) ?? GetMemoryIcon();
-                CreateSlot(memoriesPanel, memorySprite, string.Empty, () => MemoryArchive.ShowByTitle(memoryTitle));
-            }
+        foreach (string memory in memories)
+        {
+            string memoryTitle = memory;
+            Sprite memorySprite = MemoryArchive.GetPhotoByTitle(memoryTitle) ?? GetMemoryIcon();
+            CreateSlot(inventoryPanel, memorySprite, string.Empty, () => MemoryArchive.ShowByTitle(memoryTitle));
         }
     }
 
@@ -468,7 +454,7 @@ public class Inventory : MonoBehaviour
         RectTransform rect = panel.GetComponent<RectTransform>();
         if (rect != null)
         {
-            rect.sizeDelta = new Vector2(Mathf.Max(rect.sizeDelta.x, SlotSize * 3f + 24f), Mathf.Max(rect.sizeDelta.y, SlotSize));
+            rect.sizeDelta = new Vector2(Mathf.Max(rect.sizeDelta.x, SlotSize * 8f + 84f), Mathf.Max(rect.sizeDelta.y, SlotSize));
         }
     }
 

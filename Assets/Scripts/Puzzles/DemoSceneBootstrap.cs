@@ -98,6 +98,10 @@ public static class DemoSceneBootstrap
 
     private static void SetupDogScene()
     {
+        DisableIfExists("DialoguePanel");
+        DisableIfExists("ChoicesPanel");
+        DisableIfExists("InteractionText");
+
         GameObject dogBox = GameObject.Find("dogBox") ?? GameObject.Find("dogbox");
         if (dogBox != null)
         {
@@ -265,10 +269,10 @@ public static class DemoSceneBootstrap
         PlayerController player = Object.FindAnyObjectByType<PlayerController>();
         if (player == null) return;
 
-        player.minX = -7.7f;
-        player.maxX = 7.7f;
-        player.minY = -5.1f;
-        player.maxY = 5.1f;
+        player.minX = -12f;
+        player.maxX = 12f;
+        player.minY = -6.8f;
+        player.maxY = 5.7f;
     }
 
     private static void EnsureMazeVignette()

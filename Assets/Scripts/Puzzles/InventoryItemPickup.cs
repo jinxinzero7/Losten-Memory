@@ -31,6 +31,8 @@ public class InventoryItemPickup : MonoBehaviour, IWorldInteractable
     {
         if (!CanInteract) return;
 
+        interactionController?.Unregister(this);
+        DestroyInteractionPrompt();
         Inventory.AddItem(itemId);
         Destroy(gameObject);
     }
@@ -72,6 +74,16 @@ public class InventoryItemPickup : MonoBehaviour, IWorldInteractable
         else if (interactionText != null)
         {
             interactionText.SetActive(highlighted);
+        }
+    }
+
+    private void DestroyInteractionPrompt()
+    {
+        if (interactionText != null)
+        {
+            Destroy(interactionText);
+            interactionText = null;
+            interactionPrompt = null;
         }
     }
 }
