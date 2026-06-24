@@ -9,7 +9,6 @@ public class MemoryFragmentPickup : MonoBehaviour, IWorldInteractable
     [TextArea] public string fallbackCutsceneText = "Пример внутреннего монолога. Героиня начинает узнавать место на фотографии.";
     public GameObject interactionText;
 
-    private bool playerNear;
     private bool collected;
     private ThoughtPrompt interactionPrompt;
     private PlayerInteractionController interactionController;
@@ -17,7 +16,7 @@ public class MemoryFragmentPickup : MonoBehaviour, IWorldInteractable
 
     public Transform InteractionTransform => transform;
     public int InteractionPriority => 100;
-    public bool CanInteract => playerNear && !collected;
+    public bool CanInteract => !collected;
 
     private string MemoryKey => memory != null && !string.IsNullOrWhiteSpace(memory.memoryKey)
         ? memory.memoryKey
@@ -68,7 +67,6 @@ public class MemoryFragmentPickup : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = true;
         interactionController = other.GetComponent<PlayerInteractionController>();
         interactionController?.Register(this);
     }
@@ -77,7 +75,6 @@ public class MemoryFragmentPickup : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = false;
         interactionController?.Unregister(this);
         interactionController = null;
     }

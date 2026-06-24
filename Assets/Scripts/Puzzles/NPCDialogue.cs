@@ -14,14 +14,13 @@ public class NPCDialogue : MonoBehaviour, IWorldInteractable
     public GameObject interactionText;
 
     private int currentLine = 0;
-    private bool playerNear = false;
     private bool isDialogueActive = false;
     private PlayerInteractionController interactionController;
     private Collider2D interactionCollider;
 
     public Transform InteractionTransform => transform;
     public int InteractionPriority => 30;
-    public bool CanInteract => playerNear && !isDialogueActive;
+    public bool CanInteract => !isDialogueActive;
 
     void Start()
     {
@@ -100,7 +99,6 @@ public class NPCDialogue : MonoBehaviour, IWorldInteractable
     {
         if (other.CompareTag("Player"))
         {
-            playerNear = true;
             interactionController = other.GetComponent<PlayerInteractionController>();
             interactionController?.Register(this);
         }
@@ -110,7 +108,6 @@ public class NPCDialogue : MonoBehaviour, IWorldInteractable
     {
         if (other.CompareTag("Player"))
         {
-            playerNear = false;
             interactionController?.Unregister(this);
             interactionController = null;
             if (interactionText != null)

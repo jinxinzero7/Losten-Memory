@@ -3,25 +3,42 @@ using UnityEngine;
 
 public class PlayerInteractionController : MonoBehaviour
 {
-    public float interactionRadius = 1.15f;
+    public float horizontalRadius = 1.25f;
+    public float verticalRadius = 2.15f;
 
     private readonly List<IWorldInteractable> candidates = new List<IWorldInteractable>();
     private IWorldInteractable activeInteractable;
+    private float nextRefreshTime;
 
     private void Update()
     {
+        if (Time.time >= nextRefreshTime)
+        {
+            RefreshCandidates();
+            nextRefreshTime = Time.time + 0.2f;
+        }
+
         IWorldInteractable nextActive = FindBestInteractable();
         if (!ReferenceEquals(activeInteractable, nextActive))
         {
-            activeInteractable?.SetInteractionHighlighted(false);
+            if (IsAlive(activeInteractable))
+            {
+                activeInteractable.SetInteractionHighlighted(false);
+            }
+
             activeInteractable = nextActive;
             activeInteractable?.SetInteractionHighlighted(true);
         }
 
-        if (activeInteractable != null && GameInput.InteractPressed)
+        if (IsAlive(activeInteractable) && GameInput.InteractPressed)
         {
-            activeInteractable.Interact();
-            activeInteractable.SetInteractionHighlighted(false);
+            IWorldInteractable interacted = activeInteractable;
+            interacted.Interact();
+            if (ReferenceEquals(activeInteractable, interacted) && IsAlive(interacted))
+            {
+                interacted.SetInteractionHighlighted(false);
+            }
+
             activeInteractable = FindBestInteractable();
             activeInteractable?.SetInteractionHighlighted(true);
         }
@@ -41,7 +58,11 @@ public class PlayerInteractionController : MonoBehaviour
         candidates.Remove(interactable);
         if (ReferenceEquals(activeInteractable, interactable))
         {
-            activeInteractable.SetInteractionHighlighted(false);
+            if (IsAlive(activeInteractable))
+            {
+                activeInteractable.SetInteractionHighlighted(false);
+            }
+
             activeInteractable = null;
         }
     }
@@ -56,7 +77,7 @@ public class PlayerInteractionController : MonoBehaviour
         for (int i = candidates.Count - 1; i >= 0; i--)
         {
             IWorldInteractable candidate = candidates[i];
-            if (candidate == null || candidate.InteractionTransform == null)
+            if (!IsAlive(candidate) || candidate.InteractionTransform == null)
             {
                 candidates.RemoveAt(i);
                 continue;
@@ -72,20 +93,39 @@ public class PlayerInteractionController : MonoBehaviour
                 continue;
             }
 
-            float distance = Vector2.Distance(playerPosition, candidate.GetInteractionPoint(playerPosition));
-            if (distance > interactionRadius) continue;
+            Vector2 delta = candidate.GetInteractionPoint(playerPosition) - playerPosition;
+            float normalizedDistance = Mathf.Sqrt(
+                Mathf.Pow(delta.x / horizontalRadius, 2f) +
+                Mathf.Pow(delta.y / verticalRadius, 2f));
+            if (normalizedDistance > 1f) continue;
 
             int priority = candidate.InteractionPriority;
-            bool isBetter = distance < bestDistance - 0.001f
-                || (Mathf.Abs(distance - bestDistance) <= 0.001f && priority > bestPriority);
+            bool isBetter = normalizedDistance < bestDistance - 0.001f
+                || (Mathf.Abs(normalizedDistance - bestDistance) <= 0.001f && priority > bestPriority);
 
             if (!isBetter) continue;
 
             best = candidate;
-            bestDistance = distance;
+            bestDistance = normalizedDistance;
             bestPriority = priority;
         }
 
         return best;
+    }
+
+    private void RefreshCandidates()
+    {
+        foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude))
+        {
+            if (behaviour is IWorldInteractable interactable)
+            {
+                Register(interactable);
+            }
+        }
+    }
+
+    private static bool IsAlive(IWorldInteractable interactable)
+    {
+        return interactable is Object unityObject ? unityObject != null : interactable != null;
     }
 }

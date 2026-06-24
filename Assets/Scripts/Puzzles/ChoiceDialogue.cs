@@ -37,7 +37,6 @@ public class ChoiceDialogue : MonoBehaviour, IWorldInteractable
     public bool useDemoQuestDialogue = false;
 
     private int currentNodeIndex;
-    private bool playerNear;
     private bool isDialogueActive;
     private PlayerController playerController;
     private ThoughtPrompt interactionPrompt;
@@ -46,7 +45,7 @@ public class ChoiceDialogue : MonoBehaviour, IWorldInteractable
 
     public Transform InteractionTransform => transform;
     public int InteractionPriority => 30;
-    public bool CanInteract => playerNear && !isDialogueActive;
+    public bool CanInteract => !isDialogueActive;
 
     void Start()
     {
@@ -358,7 +357,6 @@ public class ChoiceDialogue : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = true;
         interactionController = other.GetComponent<PlayerInteractionController>();
         if (interactionController != null)
         {
@@ -370,7 +368,6 @@ public class ChoiceDialogue : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = false;
         interactionController?.Unregister(this);
         interactionController = null;
         SetInteractionVisible(false);

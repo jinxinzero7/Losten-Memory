@@ -8,14 +8,13 @@ public class DoorTransition : MonoBehaviour, IWorldInteractable
     public bool requireQuestStarted;
     public bool requireFinalPathOpen;
     public GameObject interactionText;
-    private bool playerNear = false;
     private ThoughtPrompt interactionPrompt;
     private PlayerInteractionController interactionController;
     private Collider2D interactionCollider;
 
     public Transform InteractionTransform => transform;
     public int InteractionPriority => 10;
-    public bool CanInteract => playerNear && !ScreenTransition.IsTransitioning;
+    public bool CanInteract => !ScreenTransition.IsTransitioning;
 
     void Start()
     {
@@ -55,7 +54,7 @@ public class DoorTransition : MonoBehaviour, IWorldInteractable
 
     void HandleBlockedDoor()
     {
-        if (requireQuestStarted && !DemoQuest.IsQuestStarted)
+        if (requireFinalPathOpen && !DemoQuest.IsFinalPathOpen)
         {
             DemoQuest.MarkLockedDoorTried();
         }
@@ -65,7 +64,6 @@ public class DoorTransition : MonoBehaviour, IWorldInteractable
     {
         if (other.CompareTag("Player"))
         {
-            playerNear = true;
             interactionController = other.GetComponent<PlayerInteractionController>();
             if (interactionController != null)
             {
@@ -78,7 +76,6 @@ public class DoorTransition : MonoBehaviour, IWorldInteractable
     {
         if (other.CompareTag("Player"))
         {
-            playerNear = false;
             interactionController?.Unregister(this);
             interactionController = null;
         }

@@ -10,15 +10,13 @@ public class PuzzleBox : MonoBehaviour, IWorldInteractable
     [TextArea] public string memoryDescription = "Пример описания фотокарточки из коробки.";
     [TextArea] public string memoryCutsceneText = "Пример внутреннего монолога после найденного воспоминания.";
 
-    private bool playerNear;
     private ThoughtPrompt hintPrompt;
     private PlayerInteractionController interactionController;
     private Collider2D interactionCollider;
 
     public Transform InteractionTransform => transform;
     public int InteractionPriority => 80;
-    public bool CanInteract => playerNear
-        && puzzleController != null
+    public bool CanInteract => puzzleController != null
         && !puzzleController.IsOpen()
         && !puzzleController.IsSolved();
 
@@ -52,7 +50,6 @@ public class PuzzleBox : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = true;
         interactionController = other.GetComponent<PlayerInteractionController>();
         interactionController?.Register(this);
     }
@@ -61,7 +58,6 @@ public class PuzzleBox : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = false;
         interactionController?.Unregister(this);
         interactionController = null;
     }

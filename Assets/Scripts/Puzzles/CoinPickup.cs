@@ -6,14 +6,13 @@ public class CoinPickup : MonoBehaviour, IWorldInteractable
     public string coinID;
     public GameObject interactionText;
 
-    private bool playerNear;
     private ThoughtPrompt interactionPrompt;
     private PlayerInteractionController interactionController;
     private Collider2D interactionCollider;
 
     public Transform InteractionTransform => transform;
     public int InteractionPriority => 100;
-    public bool CanInteract => playerNear;
+    public bool CanInteract => true;
 
     void Start()
     {
@@ -41,7 +40,6 @@ public class CoinPickup : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = true;
         interactionController = other.GetComponent<PlayerInteractionController>();
         if (interactionController != null)
         {
@@ -53,7 +51,6 @@ public class CoinPickup : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = false;
         interactionController?.Unregister(this);
         interactionController = null;
     }

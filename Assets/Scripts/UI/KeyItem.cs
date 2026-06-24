@@ -5,14 +5,13 @@ public class KeyItem : MonoBehaviour, IWorldInteractable
     public GameObject interactionText;
     public string keyID = "MainKey";
 
-    private bool playerNear;
     private ThoughtPrompt interactionPrompt;
     private PlayerInteractionController interactionController;
     private Collider2D interactionCollider;
 
     public Transform InteractionTransform => transform;
     public int InteractionPriority => 100;
-    public bool CanInteract => playerNear;
+    public bool CanInteract => true;
 
     private void Start()
     {
@@ -46,7 +45,6 @@ public class KeyItem : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = true;
         interactionController = other.GetComponent<PlayerInteractionController>();
         interactionController?.Register(this);
     }
@@ -55,7 +53,6 @@ public class KeyItem : MonoBehaviour, IWorldInteractable
     {
         if (!other.CompareTag("Player")) return;
 
-        playerNear = false;
         interactionController?.Unregister(this);
         interactionController = null;
     }

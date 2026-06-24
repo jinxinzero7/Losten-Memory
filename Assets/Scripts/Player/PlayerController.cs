@@ -67,8 +67,7 @@ public class PlayerController : MonoBehaviour
             sr.flipX = movement.x < 0f;
         }
 
-        float direction = movement.x < -0.01f ? -1f : 1f;
-        animator.SetFloat("Direction", direction);
+        animator.SetFloat("Direction", 1f);
     }
 
     void FixedUpdate()
